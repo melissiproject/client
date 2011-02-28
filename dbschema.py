@@ -1,0 +1,65 @@
+from storm.locals import *
+
+if __debug__:
+    from Print import dprint
+
+SCHEMA_FILE = '''CREATE TABLE file (id INTEGER PRIMARY KEY,
+                                    filename TEXT,
+                                    hash TEXT, 
+                                    revision INTERGER,
+                                    server_id INTEGER,
+                                    parent_id INTEGER,
+                                    modified DATETIME,
+                                    directory BOOL,
+                                    size INTEGER,
+                                    watchpath_id INTEGER,
+                                    signature BLOB
+                                    );'''
+SCHEMA_WATCHPATH = '''CREATE TABLE watchpath (id INTEGER PRIMARY KEY,
+                                              path TEXT
+                                              );'''
+SCHEMA_CONFIG = '''CREATE TABLE config (name TEXT PRIMARY KEY,
+                                        type INTEGER,
+                                        value TEXT
+                                        );'''
+
+SCHEMA_VERSION = 1
+
+class File(object):
+    __storm_table__ = "file"
+    id = Int(primary=True)
+    filename = Unicode()
+    hash = Unicode()
+    size = Int()
+    revision = Int()
+    server_id = Int()
+    parent_id = Int()
+    parent = Reference(parent_id, id)
+    modified = DateTime()
+    directory = Bool(default=False)
+    watchpath_id = Int()
+    signature = Pickle()
+
+    def __storm_pre_flush__(self):
+        if self.server_id == None:
+            raise ValueError("Error flushing, server_id cannot be null")
+        
+        if not self.directory and not (self.revision or self.hash or self.size):
+            raise ValueError("Error flushing, invalid data")
+        
+class WatchPath(object):
+    __storm_table__ = "watchpath"
+    id = Int(primary=True)
+    path = Unicode()
+    files = ReferenceSet(id, File.watchpath_id)
+
+class Config(object):
+    __storm_table__ = "config"
+    name = Unicode(primary = True)
+    type = Unicode()
+    value = Unicode()
+
+    def __repr__(self):
+        return self.value
+
+File.watchpath = Reference(File.watchpath_id, WatchPath.id)
