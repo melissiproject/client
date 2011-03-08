@@ -8,6 +8,7 @@ import worker
 import config
 import restclient
 import commander
+import queue
 import twisted
 
 # standard modules
@@ -24,6 +25,7 @@ class Hub():
         self.desktop_tray = None
         self.worker = None
         self.notify_manager = None
+        self.queue = None
 
 def main():
     # Parse options
@@ -40,6 +42,7 @@ def main():
     (options, _) = parser.parse_args()
 
     hub = Hub()
+    hub.queue = queue.Queue(hub)
     hub.config_manager = config.ConfigManager(hub, os.path.expanduser(options.config_file))
     hub.database_manager = database.DatabaseManager(hub, hub.config_manager.get_database())
     hub.desktop_tray = desktop.DesktopTray(hub,
