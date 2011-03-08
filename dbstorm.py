@@ -33,6 +33,9 @@ class DatabaseManager():
     def commit(self):
         self.store.commit()
 
+    def rollback(self):
+        self.store.rollback()
+
     def _create_schema(self):
         self.store.execute(SCHEMA_FILE)
         self.store.execute(SCHEMA_WATCHPATH)
@@ -95,5 +98,5 @@ class DatabaseManager():
 
 
         self.commit()
-        
+
 
