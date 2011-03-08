@@ -23,7 +23,7 @@ class ModifyFile(WorkerAction):
         record = self._dm.store.find(db.File,
                                      db.File.filename == self.filename,
                                      db.WatchPath.path == self.watchpath,
-                                     db.Watchpath.id == db.File.watchpath_id
+                                     db.WatchPath.id == db.File.watchpath_id
                                      ).one() or False
 
         if not record:
@@ -61,7 +61,8 @@ class ModifyFile(WorkerAction):
 
         if self._record.id:
             patch = True
-            self._file_handler = util.get_delta()
+            self._file_handler = util.get_delta(self._record.signature,
+                                                self.fullpath)
 
         else:
             patch = False
@@ -78,7 +79,7 @@ class ModifyFile(WorkerAction):
     def _post_droplet(self):
         uri = '%s/api/droplet/' % self._hub.config_manager.get_server()
         data = {'name': os.path.basename(self.filename), 'cell': self._parent.id}
-        d = self._hub.rest_client.post(str(uri))
+        d = self._hub.rest_client.post(str(uri), data=data)
         d.addCallback(self._success_droplet_callback)
         d.addErrback(self._failure_callback)
         return d
@@ -86,7 +87,7 @@ class ModifyFile(WorkerAction):
     def _post_revision(self):
         uri = '%s/api/droplet/%s/revision/' % (self._hub.config_manager.get_server(), self._record.id)
         data = {'md5': self._record.hash, 'number': self._record.revision}
-        d = self._hub.rest_client.post(str(uri))
+        d = self._hub.rest_client.post(str(uri), data=data, file_handle=self._file_handler)
         d.addCallback(self._success_revision_callback)
         d.addErrback(self._failure_callback)
         return d
@@ -94,21 +95,21 @@ class ModifyFile(WorkerAction):
     def _put_revision(self):
         uri = '%s/api/droplet/%s/revision/' % (self._hub.config_manager.get_server(), self._record.id)
         data = {'md5': self._record.hash, 'number': self._record.revision}
-        d = self._hub.rest_client.post(str(uri))
+        d = self._hub.rest_client.post(str(uri), data=data, file_handle=self._file_handler)
         d.addCallback(self._success_revision_callback)
         d.addErrback(self._failure_callback)
         return d
 
     def _success_droplet_callback(self, result):
-        result = json.loads()
+        result = json.load(result)
         self._record.id = result['reply']['pk']
         return self._post_revision()
 
     def _success_revision_callback(self, result):
-        result = json.loads()
-        self._record.signature = util.get_signature()
+        result = json.load(result)
+        self._record.signature = util.get_signature(self.fullpath)
         self._record.revision = result['reply']['number']
-        self._record.modified = util.parse_datetime()
+        self._record.modified = util.parse_datetime(result['reply']['revision']['created'])
 
     def _failure_callback(self, error):
         if __debug__:
