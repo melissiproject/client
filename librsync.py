@@ -152,7 +152,7 @@ class DeltaFile(LikeFile):
             raise librsyncError(str(e))
 
 
-class PatchFile(LikeFile):
+class PatchedFile(LikeFile):
     """File-like object which applies a librsync delta incrementally"""
     def __init__(self, basis_file, delta_file):
         """PatchedFile initializer - call with basis delta
@@ -163,8 +163,8 @@ class PatchFile(LikeFile):
 
         """
         LikeFile.__init__(self, delta_file)
-        # if type(basis_file) is not types.FileType:
-        #     raise TypeError("basis_file must be a (true) file")
+        if type(basis_file) is not types.FileType:
+            raise TypeError("basis_file must be a (true) file")
         try:
             self.maker = _librsync.new_patchmaker(basis_file)
         except _librsync.librsyncError, e:
