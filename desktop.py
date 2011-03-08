@@ -117,7 +117,7 @@ class DesktopTray:
         if self.hub.rest_client.online():
             self.hub.rest_client.disconnect()
         else:
-            self.hub.rest_client.auth()
+            self.hub.rest_client.connect()
 
     def set_connect_menu(self):
         if not self.disable:
