@@ -2,6 +2,8 @@
 
 import urllib
 import os
+import random
+from string import letters
 
 from twisted.internet import defer
 from twisted.protocols import basic
@@ -19,7 +21,7 @@ class MultiPartProducer():
     implements(iweb.IBodyProducer)
     CHUNK_SIZE = 2**14
 
-    def __init__(self, handle, deferred=None):
+    def __init__(self, data=None, file_handle=None, deferred=None):
         """ Initializes the producer
 
         files is a file descriptor
@@ -27,12 +29,55 @@ class MultiPartProducer():
 
         The procuder performs a seek(0) to the file
         """
-        self._file = handle
-        self._file_length = self._file_size(self._file)
+        self._file = file_handle
+        if self._file:
+            self._file_length = self._file_size(self._file)
+        else:
+            self._file_length = 0
+
+        self._data = data
         self._deferred = deferred
-        self.length = self._file_length
+
+        self.boundary = self._generate_boundary()
+
+        self.head = self._generate_head()
+        self.tail = self._generate_tail()
+
+        self.length = self._file_length + len(self.head) + len(self.tail)
         self._sent = 0
         self._paused = False
+
+    def _generate_boundary(self):
+        boundary = "------------------------------"
+        for i in range(12):
+            boundary += random.choice(letters)
+
+        return boundary
+
+    def _generate_tail(self):
+        if self.head:
+            return  '\r\n--%s--\r\n' % self.boundary
+        else:
+            return ''
+
+    def _generate_head(self):
+        postdata = ""
+        if self._data or self._file:
+            postdata += '%s\r\n' % self.boundary
+
+            for key, value in self._data.items():
+                postdata += 'Content-Disposition: form-data; name="%s"\r\n\r\n' % key
+                postdata += '%s\r\n' % value
+                postdata += '--%s\r\n' % self.boundary
+
+            if self._file:
+                postdata += 'Content-Disposition: form-data; name="content"; filename="content"\r\n'
+                postdata += 'Content-Type: application/octet-stream\r\n\r\n'
+            else:
+                # len('\r\n--%s\r\n' % self.boundary) == 48
+                postdata = postdata[:-48]
+
+        return postdata
 
     def startProducing(self, consumer):
         """ Starts producing """
@@ -76,14 +121,24 @@ class MultiPartProducer():
 
         done = False
         while not done and not self._paused:
-            self._file_sent = 0
-            chunk = self._file.read(self.CHUNK_SIZE)
-            if chunk:
-                self._send_to_consumer(chunk)
-                self._file_sent += len(chunk)
+            chunk = ''
+            if self._sent < len(self.head):
+                chunk = self.head[:self.CHUNK_SIZE]
+                self.head = self.head[len(chunk):]
 
-            if not chunk or self._file_sent == self._file_length:
+            if len(chunk) < self.CHUNK_SIZE and self._file:
+                chunk += self._file.read(self.CHUNK_SIZE - len(chunk))
+
+            if len(chunk) < self.CHUNK_SIZE:
+                chunk += self.tail[:self.CHUNK_SIZE - len(chunk)]
+                self.tail = self.tail[len(chunk):]
+
+            if len(chunk) == 0:
                 done = True
+            else:
+                self._send_to_consumer(chunk)
+
+
 
         if done:
             self._finish()
@@ -97,6 +152,8 @@ class MultiPartProducer():
 
     def _send_to_consumer(self, block):
         """ Writes to consumer, counts bytes and calls callback """
+        block = str(block)
+
         self._consumer.write(block)
         self._sent += len(block)
 
