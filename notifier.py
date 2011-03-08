@@ -6,6 +6,7 @@ from twisted.internet import abstract, reactor
 from os.path import join as pathjoin
 
 import dbschema as db
+from actions import *
 
 if __debug__:
     from Print import dprint
@@ -15,7 +16,7 @@ class HandleEvents(pyinotify.ProcessEvent):
         pyinotify.ProcessEvent.__init__(self)
         self.manager = manager
 
-    def checkFile(self, event): 
+    def checkFile(self, event):
         # TODO: check if we are the ones to open the file
         # really needed? we open read only anyway...
         filename = event.pathname
@@ -23,7 +24,7 @@ class HandleEvents(pyinotify.ProcessEvent):
         # check if directory
         if event.dir:
             return False
-        
+
         # we deleted we don't have to do further checks
         # 0x200 is pyinotify mask of deletion
         if event.mask == 0x200:
@@ -50,7 +51,10 @@ class HandleEvents(pyinotify.ProcessEvent):
         # we *do* have to do that although we use rec=True
         if event.dir:
             path = unicode(event.pathname)
-            self.manager.add_to_queue('CREATEDIR', self.manager.path_split(path))
+            f, w = self.manager.path_split(path)
+            self.manager.add_to_queue(CreateDir(self.manager.hub, f, w),
+                                      pathjoin(w,f)
+                                      )
             self.manager.add_watch(path)
 
     def process_IN_OPEN(self, event):
@@ -60,32 +64,30 @@ class HandleEvents(pyinotify.ProcessEvent):
 
     def process_IN_CLOSE_NOWRITE(self, event):
         if self.checkFile(event):
-            self.manager.remote_from_file_list(event)
+            self.manager.remove_from_file_list(event)
 
     def process_IN_CLOSE_WRITE(self, event):
         if self.checkFile(event):
             # remove from dictionary
-            self.manager.remote_from_file_list(event)
+            self.manager.remove_from_file_list(event)
             path = unicode(event.pathname)
-            reactor.callLater(1,
-                              self.manager.add_to_queue,
-                              'MODIFY',
-                              self.manager.path_split(path))
+            f, w = self.manager.path_split(path)
+            self.manager.add_to_queue(ModifyFile(self.manager.hub, f, w),
+                                      pathjoin(w,f)
+                                      )
 
     def process_IN_DELETE(self, event):
         # TODO when delete dir what happens with the files?
         path = unicode(event.pathname)
+        f, w = self.manager.path_split(path)
         if event.dir:
-            reactor.callLater(0,
-                              self.manager.add_to_queue,
-                              'DELETEDIR',
-                              self.manager.path_split(path))
-
+            self.manager.add_to_queue(DeleteDir(self.manager.hub, f, w),
+                                      pathjoin(w,f)
+                                      )
         elif self.checkFile(event):
-            reactor.callLater(1,
-                              self.manager.add_to_queue,
-                              'DELETE',
-                              self.manager.path_split(path))
+            self.manager.add_to_queue(DeleteFile(self.manager.hub, f, w),
+                                      pathjoin(w,f)
+                                      )
 
     def process_IN_MOVED_TO(self, event):
         path = unicode(event.pathname)
@@ -102,11 +104,19 @@ class HandleEvents(pyinotify.ProcessEvent):
             else:
                 self.process_IN_CLOSE_WRITE(event)
             return
-        reactor.callLater(1,
-                          self.manager.add_to_queue,
-                          'MOVE',
-                          (filename, old_filename, watched_dir))
 
+        if event.dir:
+            self.manager.add_to_queue(MoveDir(self.manager.hub,
+                                              filename,
+                                              old_filename,
+                                              watched_dir)
+                                      )
+        else:
+            self.manager.add_to_queue(MoveFile(self.manager.hub,
+                                               filename,
+                                               old_filename,
+                                               watched_dir)
+                                      )
     ## # for debuging proposes only
     ## def process_default(self, event):
     ##     print event
@@ -185,11 +195,16 @@ class NotifyManager():
         for root, dirs, files in os.walk(directory):
             # process directories
             for name in dirs:
-                self.add_to_queue('CREATEDIR', self.path_split(pathjoin(root,name))) 
-
+                f, w = self.path_split(pathjoin(root, name))
+                self.add_to_queue(CreateDir(self.hub, f, w),
+                                  pathjoin(w, f)
+                                  )
             # process files
             for name in files:
-                self.add_to_queue('MODIFY', self.path_split(pathjoin(root,name)))
+                f, w = self.path_split(pathjoin(root, name))
+                self.add_to_queue(ModifyFile(self.hub, f, w),
+                                  pathjoin(w, f)
+                                  )
 
         # check for deletions
         watchpath = self._dms.find(db.WatchPath, db.WatchPath.path==directory).one()
@@ -204,20 +219,22 @@ class NotifyManager():
                 if not os.path.exists(fullpath):
                     # the file got delete while we
                     # where not watching
-                    self.add_to_queue('DELETE', (f.filename, watchpath.path))
+                    if f.directory:
+                        self.add_to_queue(DeleteDir(self.hub, f.filename, watchpath.path),
+                                          fullpath)
+                    else:
+                        self.add_to_queue(DeleteFile(self.hub, f.filename, watchpath.path),
+                                          fullpath)
 
-    def add_to_queue(self, event, parameters):
-        pathname = pathjoin(parameters[1], parameters[0])
-        item = (event, (parameters))
-
+    def add_to_queue(self, action, pathname):
         if pathname not in self.open_files_list:
-            self.hub.worker.queue.put(item)
+            self.hub.queue.put(action)
 
     def add_to_file_list(self, event):
         #if self.checkFile(event):
             self.open_files_list[event.pathname] = True
 
-    def remote_from_file_list(self, event):
+    def remove_from_file_list(self, event):
         #if self.checkFile(event):
             try:
                 del self.open_files_list[event.pathname]
@@ -226,7 +243,7 @@ class NotifyManager():
                 #print event.pathname, self.open_files_list
                 pass
 
-    
+
     def _hook_inotify_to_twisted(self, wm, notifier):
         """This will hook inotify to twisted."""
         """ copied directly from event_queue.py of ubuntuone """
@@ -247,5 +264,5 @@ class NotifyManager():
 
         reader = MyReader()
         reactor.addReader(reader)
-        return reader 
- 
+        return reader
+

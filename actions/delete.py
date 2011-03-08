@@ -1,71 +1,116 @@
-import json
+# Contains
+# DeleteObject
+# DeleteDir
+# DeleteFile
+
 import shutil
 import os
-from os.path import join as pathjoin
-from twisted.internet import reactor
 
-import util
-import dbschema as db
+from actions import *
 
 if __debug__:
     from Print import dprint
 
-def delete(hub, item):
-    _dms = hub.database_manager.store
-    function, parameters = item
-    filename, watched_path = parameters
-    record = _dms.find(db.File,
-                       db.File.filename == filename,
-                       db.WatchPath.path == watched_path,
-                       db.WatchPath.id == db.File.watchpath_id
-                       ).one() or False
+class DeleteObject(WorkerAction):
+    def __init__(self, hub, filename, watchpath):
+        super(DeleteObject, self).__init__(hub)
 
-    # helper functions start
-    def success_cb(result):
-        reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-        
-    def failure_cb(error):
+        self.filename = filename
+        self.watchpath = watchpath
+        self._dm = self._hub.database_manager
+        self._record = False
+
+    @property
+    def unique_id(self):
+        if self._record:
+            return self._record.id
+        else:
+            return False
+
+    def exists(self):
+        # return record if item exists in the database
+        # else return False
+        return self._dm.store.find(db.File,
+                                   db.File.filename == self.filename,
+                                   db.WatchPath.path == self.watchpath,
+                                   db.WatchPath.id == db.File.watchpath_id
+                                   ).one() or False
+
+    def _execute(self):
+        self._record = self.exists()
+        if not self._record:
+            # file not watched, ignoring
+            # TODO maybe should look into the queue for pending actions
+            # regarding this file
+            return
+
+        # delete from database
+        self._delete_from_db()
+
+        # delete from filesystem
+        self._delete_from_fs()
+
+        # notify server
+        self._post_to_server()
+
+    def _failure(self, result):
         if __debug__:
-            dprint("An error occured while deleting ", error)
-        reactor.callLater(util.WORKER_RECALL, hub.worker.work)
+            dprint("Failure in delete", result)
 
-    # helper functions end
+        raise RetryLater
 
-    if not record:
-        # file not watched, ignoring
-        reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-        return
+class DeleteDir(DeleteObject):
+    def __init__(self, hub, filename, watchpath):
+        super(DeleteDir, self).__init__(hub, filename, watchpath)
+        self._action_name = "Delete Dir"
 
-    # delete all children
-    for child in _dms.find(db.File,
-                           db.File.filename.like(u'%s/%%' % record.filename),
-                           db.WatchPath.path == watched_path,
-                           db.WatchPath.id == db.File.watchpath_id
-                           ):
-        _dms.remove(child)
-    # delete self
-    _dms.remove(record)
-    hub.database_manager.commit()
+    def _delete_from_db(self):
+        # delete all children
+        for entry in self._dm.store.find(db.File,
+                                         db.File.filename.like(u'%s/%%' % self.filename),
+                                         db.WatchPath.path == self.watchpath,
+                                         db.WatchPath.id == db.File.watchpath_id
+                                         ):
+            entry.remove()
 
-    # delete from filesystem
-    # required when deleting recursivelly folders
-    fullpath = pathjoin(watched_path, record.filename)
-    try:
-        shutil.rmtree(fullpath)
-    except OSError, error_message:
-        if error_message.errno == 20:
-            # this is a file not a directory
-            try:
-                os.unlink(fullpath)
-            except OSError:
-                # ah, ignore
-                pass
-        
-    # data to send
-    data = {'delete': True}
-    uri = '%s/file/%s' % (hub.config_manager.get_server(),
-                                 record.server_id)
-    uri += util.urlencode(data)
-    d = hub.rest_client.delete(uri)
-    d.addCallback(success_cb)
-    d.addErrback(failure_cb)
+        # delete self
+        self._dm.store.remove(self._record)
+
+    def _delete_from_fs(self):
+        # required when deleting recursivelly folders
+        fullpath = pathjoin(self.watchpath, self._record.filename)
+        try:
+            shutil.rmtree(fullpath)
+        except OSError, error_message:
+            # ah, ignore
+            pass
+
+    def _post_to_server(self):
+        uri = '%s/api/cell/%s/' % (self._hub.config_manager.get_server(),
+                               self._record.id)
+        d = self._hub.rest_client.delete(str(uri))
+        d.addErrback(self._failure)
+
+class DeleteFile(DeleteObject):
+    def __init__(self, hub, filename, watchpath):
+        super(DeleteFile, self).__init__(hub, filename, watchpath)
+        self._action_name = "Delete File"
+
+    def _delete_from_db(self):
+        # delete self
+        self._dm.store.remove(self._record)
+
+    def _delete_from_fs(self):
+        # required when deleting recursivelly folders
+        fullpath = pathjoin(self.watchpath, self._record.filename)
+        try:
+            os.unlink(fullpath)
+        except OSError, error_message:
+            # ah, ignore
+            pass
+
+    def _post_to_server(self):
+        uri = '%s/api/droplet/%s/' % (self._hub.config_manager.get_server(),
+                                  self._record.id)
+        d = self._hub.rest_client.delete(str(uri))
+        d.addErrback(self._failure)

@@ -1,232 +1,128 @@
-from twisted.internet import reactor
-from os.path import join as pathjoin
-import os
-import base64
-import json
+# Contains
+# ModifyFile
+# CreateDir
 
-import dbschema as db
-import util
+from actions import *
 
-if __debug__:
-    from Print import dprint
+class ModifyFile(WorkerAction):
+    def __init__(self, hub, filename, watchpath):
+        super(ModifyFile, self).__init__(hub)
+        self._action_name = 'ModifyFile'
 
-def modify(hub, item):
-    _dms = hub.database_manager.store
-    function, parameters = item
+        self.filename = filename
+        self.watchpath = watchpath
 
-    if function.startswith('MODIFY'):
-        filename, watch_path = parameters
-        record = _dms.find(db.File,
-                           db.File.filename == filename,
-                           db.WatchPath.path == watch_path,
-                           db.WatchPath.id == db.File.watchpath_id
-                           ).one() or False
+        self._dm = self._hub.database_manager
 
-    elif function.startswith('CREATEDIR'):
-        filename, watch_path = parameters
-        record = _dms.find(db.File,
-                           db.File.filename == filename,
-                           db.WatchPath.path == watch_path,
-                           db.WatchPath.id == db.File.watchpath_id
-                           ).one() or False
-        if record:
-            # we already have it
-            reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-            return
 
-    elif function.startswith('MOVE'):
-        filename, old_filename, watch_path = parameters
-        record = _dms.find(db.File,
-                           db.File.filename == old_filename,
-                           db.WatchPath.path == watch_path,
-                           db.WatchPath.id == db.File.watchpath_id
-                           ).one()
-        if not record:
-            # we already did the move
-            reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-            return
+    @property
+    def fullpath(self):
+        return pathjoin(self.watchpath, self.filename)
 
-    fullpath = pathjoin(watch_path, filename)
+    def _record_get_or_create(self):
+        record = self._dm.store.find(db.File,
+                                     db.File.filename == self.filename,
+                                     db.WatchPath.path == self.watchpath,
+                                     db.Watchpath.id == db.File.watchpath_id
+                                     ).one() or False
 
-    # helper functions start
-    def success_cb(result, record, filename, fullpath, watch_path):
-        try:
-            data = json.loads(result)
-        except ValueError, error_message:
-            # let the errback handle it
-            raise
-
-        # generate signature
-        if not data['directory']:
-            file_signature = util.get_signature(fullpath)
-        else:
-            file_signature = None
-
-        # create / update record
         if not record:
             record = db.File()
+            record.filename = self.filename
+            record.hash = None
+            record.watchpath_id = self._parent.watchpath.id
+            record.directory = False
+            record.revision = 0
+            record.parent_id = self._parent.id
+            self._dm.store.add(record)
 
-        # don't use server filename since it's stripped
-        record.filename = filename
-        record.revision = data['revision']
-        record.directory = data['directory']
-        record.hash = data['hash']
-        record.size = data['size']
-        record.signature = file_signature
-        record.server_id = data['id']
-        record.modified = util.parse_datetime(data['modified'])
-        record.parent = _dms.find(db.File,
-                                  db.File.server_id == data['parent_id']
-                                  ).one()
-        record.watchpath = _dms.find(db.WatchPath,
-                                     db.WatchPath.path == watch_path
+        return record
+
+    def _get_parent(self):
+        parent = self._dm.store.find(db.File,
+                                     db.File.filename == os.path.dirname(self.filename),
+                                     db.File.watchpath_id == db.WatchPath.id,
+                                     db.WatchPath.path == self.watchpath
                                      ).one()
-        _dms.add(record)
-        hub.database_manager.commit()
-
-        # notify
-        # util.notify(filename, "Successfully uploaded to server", image="up")
-        reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-
-    def failure_cb(error):
-        if __debug__:
-            dprint("Failure in modify", error)
-        hub.database_manager.store.rollback()
-        reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-    # helper functions end
-
-    # generate hash
-    if function == 'MODIFY':
-        file_hash = util.get_hash(filename=fullpath)
-
-        if record and file_hash == record.hash:
-            # file not modified, ignore
-            if __debug__:
-                dprint("File not modified, ignoring")
-            reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-            return
-
-        if record:
-            # we already follow this file
-            delta = True
-            # generate delta
-            file_handler = util.get_delta(record.signature, fullpath)
+        if not parent:
+            raise RetryLater
         else:
-            # this is a new file
-            delta = False
+            return parent
+
+    def _execute(self):
+        self._parent = self._get_parent()
+        self._record = self._record_get_or_create()
+        self._hash = util.get_hash(filename=self.fullpath)
+
+        if self._hash == self._record.hash:
+            dprint("File not modified, ignoring")
+
+        self._record.hash = self._hash
+
+        if self._record.id:
+            patch = True
+            self._file_handler = util.get_delta()
+
+        else:
+            patch = False
             try:
-                file_handler = open(fullpath, 'rb')
-            except (OSError, IOError), error_message:
-                # we cannot access the file for some reason, ignore
-                if __debug__:
-                    dprint("Error accessing file:", error_message, exception=1)
-                hub.database_manager.store.rollback()
-                reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-                return
+                self._file_handler = open(self.fullpath)
+            except (OSError, IOError) as error_message:
+                raise RetryLater()
 
-            ## # create new record
-            ## record = db.File()
-            ## record.filename = filename
-            ## record.revision = 0
-            ## record.directory = False
-            ## record.watchpath = _dms.find(db.WatchPath,
-            ##                              db.WatchPath.path == watch_path
-            ##                              ).one()
+            if not self._record.id:
+                return self._post_droplet()
+            else:
+                return self._put_revision()
 
-        content = True
-        revision = 0
-        # get size
-        file_size = os.path.getsize(fullpath)
-        directory = False
+    def _post_droplet(self):
+        uri = '%s/api/droplet/' % self._hub.config_manager.get_server()
+        data = {'name': os.path.basename(self.filename), 'cell': self._parent.id}
+        d = self._hub.rest_client.post(str(uri))
+        d.addCallback(self._success_droplet_callback)
+        d.addErrback(self._failure_callback)
+        return d
 
-    elif function == 'CREATEDIR':
-        # check if we
-        ## record = db.File()
-        ## record.filename = filename
-        ## record.revision = 0
-        ## record.directory = True
-        ## record.watchpath = _dms.find(db.WatchPath,
-        ##                              db.WatchPath.path == watch_path
-        ##                              ).one()
-        content = False
-        delta = False
-        file_hash = ''
-        file_size = 0
-        revision = 0
-        directory = True
+    def _post_revision(self):
+        uri = '%s/api/droplet/%s/revision/' % (self._hub.config_manager.get_server(), self._record.id)
+        data = {'md5': self._record.hash, 'number': self._record.revision}
+        d = self._hub.rest_client.post(str(uri))
+        d.addCallback(self._success_revision_callback)
+        d.addErrback(self._failure_callback)
+        return d
 
-    else:
-        # function 'MOVE'
-        revision = record.revision
-        content = False
-        delta = False
-        file_hash = record.hash
-        file_size = record.size
-        directory = record.directory
+    def _put_revision(self):
+        uri = '%s/api/droplet/%s/revision/' % (self._hub.config_manager.get_server(), self._record.id)
+        data = {'md5': self._record.hash, 'number': self._record.revision}
+        d = self._hub.rest_client.post(str(uri))
+        d.addCallback(self._success_revision_callback)
+        d.addErrback(self._failure_callback)
+        return d
 
-        # update record
-        old_filename = record.filename
-        old_watchpath = record.watchpath.path
-        record.filename = filename
-        record.watchpath = record.parent.watchpath
+    def _success_droplet_callback(self, result):
+        result = json.loads()
+        self._record.id = result['reply']['pk']
+        return self._post_revision()
 
+    def _success_revision_callback(self, result):
+        result = json.loads()
+        self._record.signature = util.get_signature()
+        self._record.revision = result['reply']['number']
+        self._record.modified = util.parse_datetime()
 
-        # update all subdirectories and files if this is directory
-        # change subfiles / subdirectories in database
-        query = _dms.find(db.File,
-                          db.File.filename.like(u'%s/%%' % old_filename),
-                          db.WatchPath.path == old_watchpath,
-                          db.WatchPath.id == db.File.watchpath_id
-                          );
-        for f in query:
-            f.filename = f.filename.replace(old_filename, record.filename, 1)
-            f.watchpath = record.watchpath
-
-    parent_name = os.path.dirname(filename)
-    parent = _dms.find(db.File,
-                       db.File.filename == parent_name,
-                       db.File.watchpath_id == db.WatchPath.id,
-                       db.WatchPath.path == watch_path
-                       ).one()
-
-    # TODO DIRTY HACK
-    # Sometimes we first process a file and then the directory
-    # containing the file. This will cause record.parent to be NoneType
-    # and hence and get an exception and we cannot push the
-    # object to the server. If parent is None then push the file
-    # back to the queue. Hopefully the directory will be created
-    # well its turn comes again.
-    if not parent:
+    def _failure_callback(self, error):
         if __debug__:
-            dprint("Hey there is no parent, put the item back to queue")
-            dprint("parent_name ", parent_name)
-            dprint("watch_path ", watch_path)
-            dprint(parent)
-        hub.database_manager.store.rollback()
-        reactor.callLater(3, hub.worker.queue.put, (function, parameters))
-        reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-        return
+            dprint("Failure in modify ", error)
+        raise RetryLater
 
-    # data to send
-    data = {'filename':os.path.basename(filename),
-            'revision':revision + 1,
-            'data': content,
-            'directory':directory,
-            'delta':delta,
-            'hash':file_hash,
-            'size':file_size,
-            'parent_id':parent.server_id
-            }
-    uri = '%s/file/' % hub.config_manager.get_server()
-    if record:
-        uri += str(record.server_id)
-        # hack TODO
-        del data['directory']
+class CreateDir(WorkerAction):
+    def __init__(self, hub, dirname, watchpath):
+        super(CreateDir, self).__init__(hub)
+        self._action_name = 'CreateDir'
+        self.dirname = dirname
+        self.watchpath = watchpath
 
-    uri += util.urlencode(data)
-    if content:
-        d = hub.rest_client.post_file(uri, file_handler)
-    else:
-        d = hub.rest_client.post(uri, None)
-    d.addCallback(success_cb, record, filename, fullpath, watch_path)
-    d.addErrback(failure_cb)
+        self._dm = self._hub.database_manager
+
+    def _execute(self):
+        pass

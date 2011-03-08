@@ -38,7 +38,7 @@ def main():
                       default=False
                       )
     (options, _) = parser.parse_args()
-      
+
     hub = Hub()
     hub.config_manager = config.ConfigManager(hub, os.path.expanduser(options.config_file))
     hub.database_manager = database.DatabaseManager(hub, hub.config_manager.get_database())
@@ -62,7 +62,7 @@ def main():
         reactor.run()
     except (SystemExit, KeyboardInterrupt):
         reactor.stop()
-    
+
 
 if __name__ == "__main__":
     main()

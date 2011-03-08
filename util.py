@@ -15,26 +15,6 @@ if __debug__:
 WORKER_RECALL = 0.1
 gravatars = {}
 
-class queue():
-    """ Simple queue class, we don't care if it is thread safe
-        since we run in single thread twisted, right? """
-
-    def __init__(self):
-        from collections import deque
-        self.queue = deque()
-
-    def get(self):
-        return self.queue.popleft()
-        
-    def put(self, item):
-        self.queue.append(item)
-
-    def __contains__(self, item):
-        if item in self.queue:
-            return True
-        else:
-            return False
-
 def get_hash(filename=None, f=None):
     if filename:
         try:
@@ -44,7 +24,7 @@ def get_hash(filename=None, f=None):
             if __debug__:
                 dprint("sha256 exception", exception=1)
     if f:
-        hash_function = hashlib.sha256()
+        hash_function = hashlib.md5()
         while True:
             chunk = f.read(4096)
             if chunk == '': break
@@ -72,7 +52,7 @@ def get_signature(filename):
         if __debug__:
             dprint("Signature exception", exception=1)
         raise
-    
+
     signature_file = librsync.SigFile(f)
     signature = signature_file.read()
     return signature
@@ -102,7 +82,7 @@ def patch_file(delta, filename, hash=None):
         raise Exception("Patch exception")
 
     new_file = librsync.PatchFile(f, delta)
-    tmp_file = tempfile.TemporaryFile(prefix='foobox-', suffix='.patched')
+    tmp_file = tempfile.TemporaryFile(prefix='melisi-', suffix='.patched')
     tmp_file.write(new_file.read())
     tmp_file.seek(0)
     if not hash or hash == get_hash(f=tmp_file):
@@ -126,14 +106,14 @@ def create_path(path):
         if exc.errno == errno.EEXIST:
             pass
         else: raise
-        
+
 def get_gravatar_image(email):
     def add_gravatar(result, userhash, filename):
         gravatars[userhash] = filename
     userhash = hashlib.md5(email).hexdigest()
-    path = 'foobox-gravatar-%s.jpg' % userhash
+    path = 'melisi-gravatar-%s.jpg' % userhash
     if userhash not in gravatars:
-        tf = tempfile.NamedTemporaryFile(suffix='.jpg', prefix='foobox-gravatar-', dir='/tmp', delete=False)
+        tf = tempfile.NamedTemporaryFile(suffix='.jpg', prefix='melisi-gravatar-', dir='/tmp', delete=False)
         d = client.downloadPage('http://www.gravatar.com/avatar/' + userhash, tf)
         d.addCallback(add_gravatar, userhash, tf.name)
     return d
@@ -164,7 +144,7 @@ def check_keys_in_data(keys, data, exact_data=True, set_default=True):
     is the default value to be set to the 'key' if the key is missing. If
     'default' is missing then 'key' is considered mandatory and if not found
     a KeyError is raised.
-    
+
     Arguments:
     - `keys`: a list of dictionaries containing the keys to look for.
     - `data`: the data to check for the keys
@@ -177,7 +157,7 @@ def check_keys_in_data(keys, data, exact_data=True, set_default=True):
                 # the key is mandatory, raise KeyError
                 raise KeyError("Missing key '%s'" % key['name'])
             else:
-                # key is optional                
+                # key is optional
                 if set_default:
                     #set default value
                     data[key['name']] = key['default']
@@ -198,7 +178,7 @@ def check_keys_in_data(keys, data, exact_data=True, set_default=True):
                     del(data[key['name']])
             dprint("Conflicting key", data)
         raise KeyError("More data injected")
-            
+
     return data
 
 
@@ -215,7 +195,7 @@ def urlencode(dic):
     return '?' + urllib.urlencode(dic)
 
 def parse_datetime(dt_string):
-    return datetime.strptime(dt_string, "%Y-%m-%d %H:%M:%S %Z")
+    return datetime.strptime(dt_string, '%Y-%m-%d %H:%M:%S')
 
 def get_localtime(dt):
     """
