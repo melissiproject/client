@@ -3,15 +3,13 @@ from storm.locals import *
 if __debug__:
     from Print import dprint
 
-SCHEMA_FILE = '''CREATE TABLE file (id INTEGER PRIMARY KEY,
+SCHEMA_FILE = '''CREATE TABLE file (id TEXT PRIMARY KEY,
                                     filename TEXT,
-                                    hash TEXT, 
+                                    hash TEXT,
                                     revision INTERGER,
-                                    server_id INTEGER,
-                                    parent_id INTEGER,
+                                    parent_id TEXT,
                                     modified DATETIME,
                                     directory BOOL,
-                                    size INTEGER,
                                     watchpath_id INTEGER,
                                     signature BLOB
                                     );'''
@@ -27,13 +25,11 @@ SCHEMA_VERSION = 1
 
 class File(object):
     __storm_table__ = "file"
-    id = Int(primary=True)
+    id = Unicode(primary=True)
     filename = Unicode()
     hash = Unicode()
-    size = Int()
     revision = Int()
-    server_id = Int()
-    parent_id = Int()
+    parent_id = Unicode()
     parent = Reference(parent_id, id)
     modified = DateTime()
     directory = Bool(default=False)
@@ -41,12 +37,10 @@ class File(object):
     signature = Pickle()
 
     def __storm_pre_flush__(self):
-        if self.server_id == None:
-            raise ValueError("Error flushing, server_id cannot be null")
-        
-        if not self.directory and not (self.revision or self.hash or self.size):
+        if not self.directory and not (self.revision or self.hash or \
+                                       self.signature):
             raise ValueError("Error flushing, invalid data")
-        
+
 class WatchPath(object):
     __storm_table__ = "watchpath"
     id = Int(primary=True)
