@@ -65,7 +65,7 @@ class RestClient():
         return self._sendRequest('GET', uri, data, file_handle=None)
 
     def post(self, uri, data=None, file_handle=None):
-        self._sendRequest('POST', uri, data, file_handle)
+        return self._sendRequest('POST', uri, data, file_handle)
 
     def put(self, uri, data=None, file_handle=None):
         return self._sendRequest('PUT', uri, data, file_handle)
@@ -95,7 +95,7 @@ class RestClient():
             """ trap any errors from receiving """
             print "responseFail failure", result.type
             # data.trap()
-            # return result
+            return result
 
         # receiver
         receiverDeferred = Deferred()
