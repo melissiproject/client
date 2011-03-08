@@ -16,9 +16,9 @@ class ConfigManager:
             self.config.add_section('main')
             self.config.set('main', 'username', '')
             self.config.set('main', 'password', '')
-            self.config.set('main', 'host', 'https://foobox-srv.sealabs.net:4403')
-            self.config.set('main', 'database', 'sqlite:///%s/foobox.db' % config_path)
-            self.config.set('main', 'socket', '%s/foobox.sock' % config_path)
+            self.config.set('main', 'host', 'https://localhost:8000')
+            self.config.set('main', 'database', 'sqlite:///%s/melisi.db' % config_path)
+            self.config.set('main', 'socket', '%s/melisi.sock' % config_path)
             self.config.set('main', 'no-desktop', 'False')
             self.config.set('main', 'desktop-notifications', 'True')
 
@@ -45,7 +45,7 @@ class ConfigManager:
 
     def get_password(self):
         return self.config.get('main', 'password')
-            
+
     def set_password(self, password):
         self.config.set('main', 'password', str(password))
         self.write_config()
@@ -63,14 +63,14 @@ class ConfigManager:
     def set_socket(self, socket):
         self.config.set('main', 'socket', str(socket))
         self.write_config()
-        
+
     def get_server(self):
         return self.config.get('main', 'host')
-    
+
     def set_server(self, host):
         self.config.set('main', 'host', str(host))
         self.write_config()
-        
+
     def get_watchlist(self):
         record = self.hub.database_manager.store.find(db.WatchPath).one() or False
         if record:
@@ -86,7 +86,7 @@ class ConfigManager:
         if record:
             record.path = path
             self.hub.database_manager.commit()
-            return True 
+            return True
         else:
             return False
 
@@ -102,7 +102,7 @@ class ConfigManager:
         if record:
             record.value = unicode(basedir)
             self.hub.database_manager.commit()
-            return True 
+            return True
         else:
             return False
 
@@ -114,7 +114,7 @@ class ConfigManager:
             record.name = u'timestamp'
             record.type = u'str'
             self.hub.database_manager.store.add(record)
-        
+
         record.value = unicode(timestamp)
         self.hub.database_manager.commit()
         return True

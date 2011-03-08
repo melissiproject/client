@@ -30,7 +30,7 @@ def main():
     parser = OptionParser()
     parser.add_option("--config-file",
                       help="Path to configuration file",
-                      default=os.path.expanduser('~/.foobox/config')
+                      default=os.path.expanduser('~/.melisi/config')
                       )
     parser.add_option("--no-desktop",
                       help="Disable desktop",

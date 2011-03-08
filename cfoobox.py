@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Foobox command line tool
-# 
+#
 # Yeah ;)
 
 # standard modules
@@ -17,7 +17,7 @@ from twisted.internet.protocol import ClientFactory
 modes = {'woro':1, 'wora': 2, 'wara': 3, 'wnra':4, 'remove':-1}
 command_list = []
 
-class FooboxCommanderProtocol(LineReceiver):
+class MelisiCommanderProtocol(LineReceiver):
     def connectionMade(self):
         for cmd in self.factory.command_list:
             # send command
@@ -32,9 +32,9 @@ class FooboxCommanderProtocol(LineReceiver):
     def connectionLost(self, reason):
         reactor.stop()
 
-        
-class FooboxCommander(ClientFactory):
-    protocol = FooboxCommanderProtocol
+
+class MelisiCommander(ClientFactory):
+    protocol = MelisiCommanderProtocol
 
     def __init__(self, command_list):
         self.command_list = command_list
@@ -45,7 +45,7 @@ def usage(commands):
 def share(argv):
     def usage():
         print "Usage: %s share [folder] [mode] [users]" % sys.argv[0]
-        
+
     if len(sys.argv) != 5:
         usage()
         sys.exit(1)
@@ -70,14 +70,14 @@ def share(argv):
         if user == '':
             continue
         cmd["users"].append(user)
-    
+
     command_list.append(json.dumps(cmd))
 
 
 def auth(argv):
     def usage():
         print "Usage: %s auth [username] [password]" % sys.argv[0]
-        
+
     if len(argv) != 2:
         usage()
         sys.exit(1)
@@ -102,7 +102,7 @@ def connect(argv):
 def register(argv):
     def usage():
         print "Usage: %s register [username] [password] [email]" % sys.argv[0]
-        
+
     if len(argv) != 3:
         usage()
         sys.exit()
@@ -150,12 +150,12 @@ def deleteuser(argv):
 
     cmd = {'command':'DELETEUSER'}
     command_list.append(json.dumps(cmd))
-           
+
 def main():
     parser = OptionParser()
     parser.add_option("--socket",
-                      help="UNIX socket where foobox client listens",
-                      default=os.path.expanduser("~/.foobox/foobox.sock")
+                      help="UNIX socket where melisis client listens",
+                      default=os.path.expanduser("~/.melisi/melisi.sock")
                       )
     (options, args) = parser.parse_args()
 
@@ -179,8 +179,8 @@ def main():
         usage(commands)
         sys.exit(1)
 
-    foobox_commander = FooboxCommander(command_list)
-    reactor.connectUNIX(options.socket, foobox_commander, timeout=2)
+    melisi_commander = MelisiCommander(command_list)
+    reactor.connectUNIX(options.socket, melisi_commander, timeout=2)
     reactor.run()
 
 
