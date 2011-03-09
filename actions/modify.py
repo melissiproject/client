@@ -117,13 +117,75 @@ class ModifyFile(WorkerAction):
         raise RetryLater
 
 class CreateDir(WorkerAction):
-    def __init__(self, hub, dirname, watchpath):
+    def __init__(self, hub, filename, watchpath):
         super(CreateDir, self).__init__(hub)
         self._action_name = 'CreateDir'
-        self.dirname = dirname
+        self.filename = filename
         self.watchpath = watchpath
 
         self._dm = self._hub.database_manager
 
+    def _exists(self):
+        # return record if item exists in the database
+        # else return False
+        return self._dm.store.find(db.File,
+                                   db.File.filename == self.filename,
+                                   db.WatchPath.path == self.watchpath,
+                                   db.WatchPath.id == db.File.watchpath_id
+                                   ).one() or False
+
+    def _get_parent(self):
+        parent = self._dm.store.find(db.File,
+                                     db.File.filename == os.path.dirname(self.filename),
+                                     db.File.watchpath_id == db.WatchPath.id,
+                                     db.WatchPath.path == self.watchpath
+                                     ).one()
+        if not parent:
+            raise RetryLater
+        else:
+            return parent
+
+    def _create_record(self):
+        record = db.File()
+        record.filename = self.filename
+        record.hash = None
+        record.watchpath_id = self._parent.watchpath.id
+        record.directory = True
+        record.revision = 0
+        record.parent_id = self._parent.id
+
+        # add to store
+        self._dm.store.add(record)
+
+        return record
+
     def _execute(self):
-        pass
+        if self._exists():
+            # record already exists, do nothing
+            raise DropItem("Directory record already exists")
+
+        # get parent
+        self._parent = self._get_parent()
+
+        # create record
+        self._record = self._create_record()
+
+        uri = '%s/api/cell/' % (self._hub.config_manager.get_server())
+        data = {'name': os.path.basename(self.filename),
+                'parent':self._record.parent.id
+                }
+        d = self._hub.rest_client.post(str(uri), data=data)
+        d.addCallback(self._success)
+        d.addErrback(self._failure)
+        return d
+
+
+    def _success(self, result):
+        result = json.load(result)
+        self._record.id = result['reply']['pk']
+
+    def _failure(self, error):
+        if __debug__:
+            dprint("Cell create failed", error)
+
+        raise RetryLater
