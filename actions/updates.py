@@ -72,8 +72,8 @@ class CellUpdate(WorkerAction):
         self.roots = roots
         self.owner = owner
         self.deleted = deleted
-        self.created = created
-        self.updated = updated
+        self.created = util.parse_datetime(created)
+        self.updated = util.parse_datetime(updated)
 
     @property
     def unique_id(self):
@@ -212,8 +212,8 @@ class CellUpdate(WorkerAction):
                         child.filename = child.filename.replace(oldfilename, self._record.filename, 1)
                         child.watchpath = self._record.watchpath
 
-
-
+        # update modified time
+        self._record.modified = self.updated
 
 class DropletUpdate(WorkerAction):
     def __init__(self, hub, pk, name, cell, owner, created, updated, deleted, revisions):
