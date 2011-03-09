@@ -50,7 +50,7 @@ class WorkerAction(object):
         self._hub.queue.wake_up(self.unique_id)
 
     def _execute(self):
-        raise NotImplementedError("foo")
+        raise NotImplementedError("WorkerAction not implemented error")
 
     def __call__(self):
         if __debug__:
@@ -69,3 +69,4 @@ class WorkerAction(object):
 from modify import *
 from updates import *
 from delete import *
+from move import *
