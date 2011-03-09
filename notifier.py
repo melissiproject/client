@@ -109,17 +109,19 @@ class HandleEvents(pyinotify.ProcessEvent):
             self.manager.add_to_queue(MoveDir(self.manager.hub,
                                               filename,
                                               old_filename,
-                                              watched_dir)
+                                              watched_dir),
+                                      pathjoin(watched_dir, filename)
                                       )
         else:
             self.manager.add_to_queue(MoveFile(self.manager.hub,
                                                filename,
                                                old_filename,
-                                               watched_dir)
+                                               watched_dir),
+                                      pathjoin(watched_dir, filename)
                                       )
-    ## # for debuging proposes only
-    ## def process_default(self, event):
-    ##     print event
+    # # for debuging proposes only
+    # def process_default(self, event):
+    #     print event
 
 
 class NotifyManager():
