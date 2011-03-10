@@ -79,13 +79,15 @@ class RestClient():
         def finished(bytes):
             if __debug__:
                 dprint("Upload DONE: %d" % bytes)
+
         def progress(current, total):
             if __debug__:
                 dprint("Upload PROGRESS: %d out of %d" % (current, total))
+
         def failure(error):
             if __debug__:
                 dprint("Upload ERROR: %s" % error)
-
+                dprint(error, exception=1)
             return error
 
         def responseDone(data):
@@ -94,6 +96,8 @@ class RestClient():
         def responseFail(result):
             """ trap any errors from receiving """
             print "responseFail failure", result.type
+            if __debug__:
+                dprint(result, exception=1)
             # data.trap()
             return result
 
