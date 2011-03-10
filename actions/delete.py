@@ -51,7 +51,7 @@ class DeleteObject(WorkerAction):
         self._delete_from_fs()
 
         # notify server
-        self._post_to_server()
+        return self._post_to_server()
 
     def _failure(self, result):
         if __debug__:
@@ -91,6 +91,8 @@ class DeleteDir(DeleteObject):
         d = self._hub.rest_client.delete(str(uri))
         d.addErrback(self._failure)
 
+        return d
+
 class DeleteFile(DeleteObject):
     def __init__(self, hub, filename, watchpath):
         super(DeleteFile, self).__init__(hub, filename, watchpath)
@@ -114,3 +116,5 @@ class DeleteFile(DeleteObject):
                                   self._record.id)
         d = self._hub.rest_client.delete(str(uri))
         d.addErrback(self._failure)
+
+        return d
