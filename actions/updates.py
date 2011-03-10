@@ -42,7 +42,7 @@ class GetUpdates(WorkerAction):
         # todo
         # update timestamp
         # notifications
-        self._add_to_queue(GetUpdates(hub=self._hub), when=100)
+        self._add_to_queue(GetUpdates(hub=self._hub), when=10)
 
     def _failure(self, result):
         if __debug__:
@@ -142,12 +142,12 @@ class CellUpdate(WorkerAction):
                 self._watchpath = watchpath
                 self._dm.store.add(watchpath)
             else:
-                # and it's already delete don't worry
+                # and it's already deleted don't worry
                 if self.deleted:
                     return True
                 elif not self.parent_exists():
                     # if parent does not exist, add to queue
-                    raise WaitItem(self.roots[-1]['pk'])
+                    raise WaitItem(self.roots[0]['pk'])
 
             self._record = self._create_record()
 
@@ -163,7 +163,7 @@ class CellUpdate(WorkerAction):
                 return
             elif not self.parent_exists():
                 # if parent does not exist, add to queue
-                raise WaitItem(self.roots[-1]['pk'])
+                raise WaitItem(self.roots[0]['pk'])
 
             self._record = self.exists()
 
@@ -183,7 +183,7 @@ class CellUpdate(WorkerAction):
                 for child in self._dm.store.find(db.File,
                                                  db.File.filename.like(u'%s/%%' % self._record.filename),
                                                  db.WatchPath.path == self._record.watchpath.path,
-                                                 db.Watchpath.id == db.File.watchpath_id
+                                                 db.WatchPath.id == db.File.watchpath_id
                                                  ):
                     self._dm.store.remove(child)
 
@@ -195,8 +195,9 @@ class CellUpdate(WorkerAction):
                     oldfilename = self._record.filename
                     oldwatchpath = self._record.watchpath.path
 
-                    self._record.filename = parent.filename + self.name
+                    self._record.filename = pathjoin(parent.filename, self.name)
                     self._record.watchpath = parent.watchpath
+                    self._record.parent_id = self.roots[0]['pk']
 
                     oldpath = pathjoin(oldwatchpath, oldfilename)
 
@@ -206,8 +207,8 @@ class CellUpdate(WorkerAction):
                     # change subfiles / subdirectories in database
                     for child in self._dm.store.find(db.File,
                                                      db.File.filename.like(u'%s/%%' % oldfilename),
-                                                     db.Watchpath.path == oldwatchpath,
-                                                     db.Watchpath.id == db.File.watchpath_id
+                                                     db.WatchPath.path == oldwatchpath,
+                                                     db.WatchPath.id == db.File.watchpath_id
                                                      ):
                         child.filename = child.filename.replace(oldfilename, self._record.filename, 1)
                         child.watchpath = self._record.watchpath
@@ -306,12 +307,13 @@ class DropletUpdate(WorkerAction):
         current_mode = os.stat(self.fullpath).st_mode
         os.chmod(self.fullpath, current_mode|256|128)
 
-    def _generate_signarute(self):
+    def _generate_signature(self):
         return util.get_signature(self.fullpath)
 
     def _execute(self):
         # if we don't know the file:
-        if not self.exists():
+        self._record = self.exists()
+        if not self._record:
              # and it's already delete don't worry
              if self.deleted:
                  return True
@@ -323,7 +325,7 @@ class DropletUpdate(WorkerAction):
              self._record = self._create_record()
              cell = self.cell_exists()
 
-             # check if for some reasy we already have the file
+             # check if for some reason we already have the file
              if os.path.exists(self.fullpath) and \
                 util.get_hash(self.fullpath) == self._record.hash:
 
@@ -331,7 +333,7 @@ class DropletUpdate(WorkerAction):
                  self.fix_permissions()
 
                  # generate signarute
-                 self._record.signature = self._generate_signarute()
+                 self._record.signature = self._generate_signature()
 
              else:
                  # we need to fetch the file
@@ -340,8 +342,46 @@ class DropletUpdate(WorkerAction):
 
         # we know the file
         else:
-            # TODO
-            pass
+            # if deleted call a delete
+            if self.deleted:
+                self._hub.queue.put(DeleteFile(self._hub,
+                                               self._record.filename,
+                                               self._record.watchpath.path)
+                                    )
+                raise DropItem("I forked a delete")
+
+            parent = self._get_parent()
+            if parent.id != self._record.parent_id:
+                print "Move!"
+                oldfilename = self._record.filename
+                oldwatchpath = self._record.watchpath.path
+
+                self._record.filename = pathjoin(parent.filename, self.name)
+                self._record.watchpath = parent.watchpath
+                self._record.parent = parent
+
+                oldpath = pathjoin(oldwatchpath, oldfilename)
+
+                # move file
+                shutil.move(oldpath, self.fullpath)
+
+            # check if file content changed
+            # TODO be aware of race conditions here
+            if self.revisions[-1]['content_md5'] != self._record.hash and \
+               len(self.revisions) > self._record.revision:
+                # yeah there is some new content, let's fetch this
+                return self._get_patch()
+
+    def _get_parent(self):
+        parent = self._dm.store.find(db.File,
+                                     db.File.id == self.cell['pk']
+                                     ).one()
+
+        if not parent:
+            raise RetryLater
+        else:
+            return parent
+
 
     def _get_file(self):
         uri = '%(server)s/api/droplet/%(droplet_id)s/revision/latest/content/' %\
@@ -351,14 +391,27 @@ class DropletUpdate(WorkerAction):
         d.addCallback(self._get_file_success)
         d.addErrback(self._failure)
 
-    def _get_patch_success(self):
-        pass
+        return d
 
-    def _get_patch_error(self):
-        pass
+    def _get_patch_success(self, result):
+        # try patching
+        util.patch_file(result, self.fullpath, self.revisions[-1]['content_md5'])
+
+        # ok same changes in db
+        self._record.signature = self._generate_signature()
+        self._record.hash = self.revisions[-1]['content_md5']
+        self._record.modified = self.updated
+        self._record.revision = len(self.revisions)
 
     def _get_patch(self):
-        pass
+        uri = '%(server)s/api/droplet/%(droplet_id)s/revision/latest/patch/' %\
+              {'server': self._hub.config_manager.get_server(),
+               'droplet_id': self.pk}
+        d = self.hub.rest_client.get(str(uri))
+        d.addCallback(self._get_patch_success)
+        d.addErrback(self._failure)
+
+        return d
 
     def _get_file_success(self, result):
         # result is a file handle
@@ -384,8 +437,10 @@ class DropletUpdate(WorkerAction):
         # update time
         self._touch_file_datetime()
 
-        # update signature
-        self._record.signature = self._generate_signarute()
+        # update signature, revision and time
+        self._record.signature = self._generate_signature()
+        self._record.revision = len(self.revisions)
+        self._record.modified = self.updated
 
     def _failure(self, result):
         if __debug__:
