@@ -13,6 +13,10 @@ class MoveObject(WorkerAction):
 
         self._dm = self._hub.database_manager
 
+    @property
+    def unique_id(self):
+        return 'Move %s' % pathjoin(self.watchpath, self.filename)
+
     def _exists(self):
         # return record if item exists in the database
         # else return False
@@ -127,7 +131,6 @@ class MoveDir(MoveObject):
                                          result['reply']['name']
                                          )
         self._record.modified = util.parse_datetime(result['reply']['updated'])
-        print result['reply']
         self._update_children()
 
     def _failure(self, error):
