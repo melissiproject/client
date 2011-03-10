@@ -122,15 +122,16 @@ class MultiPartProducer():
         done = False
         while not done and not self._paused:
             chunk = ''
+
             if self._sent < len(self.head):
-                chunk = self.head[:self.CHUNK_SIZE]
+                chunk = str(self.head[:self.CHUNK_SIZE])
                 self.head = self.head[len(chunk):]
 
             if len(chunk) < self.CHUNK_SIZE and self._file:
-                chunk += self._file.read(self.CHUNK_SIZE - len(chunk))
+                chunk += str(self._file.read(self.CHUNK_SIZE - len(chunk)))
 
             if len(chunk) < self.CHUNK_SIZE:
-                chunk += self.tail[:self.CHUNK_SIZE - len(chunk)]
+                chunk += str(self.tail[:self.CHUNK_SIZE - len(chunk)])
                 self.tail = self.tail[len(chunk):]
 
             if len(chunk) == 0:
@@ -153,7 +154,6 @@ class MultiPartProducer():
     def _send_to_consumer(self, block):
         """ Writes to consumer, counts bytes and calls callback """
         block = str(block)
-
         self._consumer.write(block)
         self._sent += len(block)
 
@@ -164,6 +164,7 @@ class MultiPartProducer():
             handle.seek(0)
             size = os.fstat(handle.fileno()).st_size
             handle.seek(0)
+
         elif isinstance(handle, librsync.DeltaFile):
             # TODO
             # I don't like this way of calculating.
