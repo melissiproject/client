@@ -36,11 +36,6 @@ class File(object):
     watchpath_id = Int()
     signature = Pickle()
 
-    def __storm_pre_flush__(self):
-        if not self.directory and not (self.revision or self.hash or \
-                                       self.signature):
-            raise ValueError("Error flushing, invalid data")
-
 class WatchPath(object):
     __storm_table__ = "watchpath"
     id = Int(primary=True)
