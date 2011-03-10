@@ -75,13 +75,12 @@ def patch_file(delta, filename, hash=None):
     # TODO using stringio means that we store delta into memory!
     try:
         f = open(filename, 'rb')
-        delta = open(delta, 'rb')
     except IOError:
         if __debug__:
             dprint("Patch error, cannot open filename '%s'" % filename, exception=1)
         raise Exception("Patch exception")
 
-    new_file = librsync.PatchFile(f, delta)
+    new_file = librsync.PatchedFile(f, delta)
     tmp_file = tempfile.TemporaryFile(prefix='melisi-', suffix='.patched')
     tmp_file.write(new_file.read())
     tmp_file.seek(0)
