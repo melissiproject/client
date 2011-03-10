@@ -56,6 +56,7 @@ class ModifyFile(WorkerAction):
 
         if self._hash == self._record.hash:
             dprint("File not modified, ignoring")
+            raise DropItem("File not modified, ignoring")
 
         self._record.hash = self._hash
 
@@ -63,6 +64,7 @@ class ModifyFile(WorkerAction):
             patch = True
             self._file_handler = util.get_delta(self._record.signature,
                                                 self.fullpath)
+            return self._put_revision()
 
         else:
             patch = False
@@ -95,7 +97,7 @@ class ModifyFile(WorkerAction):
     def _put_revision(self):
         uri = '%s/api/droplet/%s/revision/' % (self._hub.config_manager.get_server(), self._record.id)
         data = {'md5': self._record.hash, 'number': self._record.revision}
-        d = self._hub.rest_client.post(str(uri), data=data, file_handle=self._file_handler)
+        d = self._hub.rest_client.put(str(uri), data=data, file_handle=self._file_handler)
         d.addCallback(self._success_revision_callback)
         d.addErrback(self._failure_callback)
         return d
@@ -103,6 +105,8 @@ class ModifyFile(WorkerAction):
     def _success_droplet_callback(self, result):
         result = json.load(result)
         self._record.id = result['reply']['pk']
+        self._record.revision = len(result['reply']['revisions'])
+
         return self._post_revision()
 
     def _success_revision_callback(self, result):
@@ -124,6 +128,10 @@ class CreateDir(WorkerAction):
         self.watchpath = watchpath
 
         self._dm = self._hub.database_manager
+
+    @property
+    def unique_id(self):
+        return self.filename
 
     def _exists(self):
         # return record if item exists in the database
@@ -177,8 +185,8 @@ class CreateDir(WorkerAction):
         d = self._hub.rest_client.post(str(uri), data=data)
         d.addCallback(self._success)
         d.addErrback(self._failure)
-        return d
 
+        return d
 
     def _success(self, result):
         result = json.load(result)
