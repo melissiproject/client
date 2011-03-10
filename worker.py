@@ -29,6 +29,7 @@ class Worker():
             if self.processing:
                 self.processing = False
                 self.hub.desktop_tray.set_icon_ok()
+
             reactor.callLater(1, self.work)
             return
 
@@ -39,8 +40,6 @@ class Worker():
             # maybe an overkill to call each item
             self.hub.desktop_tray.set_recent_updates()
             self.process_item(item)
-        else:
-            reactor.callLater(0, self.work)
 
     def process_item(self, item):
         # notify tray and stdout
@@ -53,6 +52,7 @@ class Worker():
 
     def _action_failure(self, failure, item):
         # rollback database
+        print "rolling back", item
         self.hub.database_manager.rollback()
 
         try:
