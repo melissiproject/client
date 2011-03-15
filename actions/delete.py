@@ -12,6 +12,7 @@ if __debug__:
     from Print import dprint
 
 class DeleteObject(WorkerAction):
+    """ lala """
     def __init__(self, hub, filename, watchpath):
         super(DeleteObject, self).__init__(hub)
 
@@ -62,7 +63,6 @@ class DeleteObject(WorkerAction):
 class DeleteDir(DeleteObject):
     def __init__(self, hub, filename, watchpath):
         super(DeleteDir, self).__init__(hub, filename, watchpath)
-        self._action_name = "Delete Dir"
 
     def _delete_from_db(self):
         # delete all children
@@ -96,7 +96,6 @@ class DeleteDir(DeleteObject):
 class DeleteFile(DeleteObject):
     def __init__(self, hub, filename, watchpath):
         super(DeleteFile, self).__init__(hub, filename, watchpath)
-        self._action_name = "Delete File"
 
     def _delete_from_db(self):
         # delete self

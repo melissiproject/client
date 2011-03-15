@@ -80,7 +80,6 @@ class MoveObject(WorkerAction):
 class MoveFile(MoveObject):
     def __init__(self, hub, filename, old_filename, watchpath):
         super(MoveFile, self).__init__(hub, filename, old_filename, watchpath)
-        self._action_name = "MoveFile"
 
     def _get_data(self):
         return {'name': os.path.basename(self.filename),
@@ -112,7 +111,6 @@ class MoveFile(MoveObject):
 class MoveDir(MoveObject):
     def __init__(self, hub, filename, old_filename, watchpath):
         super(MoveDir, self).__init__(hub, filename, old_filename, watchpath)
-        self._action_name = "MoveDir"
 
     def _get_data(self):
         return {'name': os.path.basename(self.filename),

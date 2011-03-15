@@ -7,7 +7,6 @@ from actions import *
 class GetUpdates(WorkerAction):
     def __init__(self, hub):
         super(GetUpdates, self).__init__(hub)
-        self._action_name = "GetUpdates"
 
     @property
     def _uri(self):
@@ -61,8 +60,6 @@ class CellUpdate(WorkerAction):
         assert isinstance(updated, basestring)
 
         super(CellUpdate, self).__init__(hub)
-
-        self._action_name = "CellUpdate"
 
         self.hub = hub
         self._dm = self.hub.database_manager
@@ -228,7 +225,6 @@ class DropletUpdate(WorkerAction):
         assert isinstance(revisions, list)
 
         super(DropletUpdate, self).__init__(hub)
-        self._action_name = "DropletUpdate"
 
         self.hub = hub
         self._dm = self.hub.database_manager

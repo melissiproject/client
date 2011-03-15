@@ -1,3 +1,6 @@
+#
+# This is documentation for worker
+#
 from twisted.internet import reactor
 from twisted.internet import defer
 

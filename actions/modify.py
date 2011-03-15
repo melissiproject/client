@@ -7,7 +7,6 @@ from actions import *
 class ModifyFile(WorkerAction):
     def __init__(self, hub, filename, watchpath):
         super(ModifyFile, self).__init__(hub)
-        self._action_name = 'ModifyFile'
 
         self.filename = filename
         self.watchpath = watchpath
@@ -123,7 +122,6 @@ class ModifyFile(WorkerAction):
 class CreateDir(WorkerAction):
     def __init__(self, hub, filename, watchpath):
         super(CreateDir, self).__init__(hub)
-        self._action_name = 'CreateDir'
         self.filename = filename
         self.watchpath = watchpath
 
