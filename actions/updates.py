@@ -62,8 +62,6 @@ class CellUpdate(WorkerAction):
         super(CellUpdate, self).__init__(hub)
 
         self.hub = hub
-        self._dm = self.hub.database_manager
-
         self.pk = pk
         self.name = name
         self.roots = roots
@@ -79,9 +77,7 @@ class CellUpdate(WorkerAction):
     def exists(self):
         # return record if item exists in the database
         # else return False
-        return self._dm.store.find(db.File,
-                                   db.File.id == self.pk
-                                   ).one() or False
+        return self._fetch_file_record(File__id=self.pk)
 
     def is_root(self):
         if not len(self.roots):
@@ -92,9 +88,8 @@ class CellUpdate(WorkerAction):
     def parent_exists(self):
         # return True if parent exists
         if not self.is_root():
-            return self._dm.store.find(db.File,
-                                       db.File.id == self.roots[0]['pk']
-                                       ).one() or False
+            return self._fetch_file_record(File__id=self.roots[0]['pk'])
+
         else:
             return False
 
@@ -137,7 +132,7 @@ class CellUpdate(WorkerAction):
                 watchpath.server_id = self.pk
                 watchpath.path = pathjoin(os.path.abspath(u'.'), self.name)
                 self._watchpath = watchpath
-                self._dm.store.add(watchpath)
+                self._dms.add(watchpath)
             else:
                 # and it's already deleted don't worry
                 if self.deleted:
@@ -177,12 +172,12 @@ class CellUpdate(WorkerAction):
                                exception=1)
 
                 # remove from database
-                for child in self._dm.store.find(db.File,
-                                                 db.File.filename.like(u'%s/%%' % self._record.filename),
-                                                 db.WatchPath.path == self._record.watchpath.path,
-                                                 db.WatchPath.id == db.File.watchpath_id
-                                                 ):
-                    self._dm.store.remove(child)
+                for child in self._dms.find(db.File,
+                                            db.File.filename.like(u'%s/%%' % self._record.filename),
+                                            db.WatchPath.path == self._record.watchpath.path,
+                                            db.WatchPath.id == db.File.watchpath_id
+                                            ):
+                    self._dms.remove(child)
 
             # file was updated
             else:
@@ -202,11 +197,11 @@ class CellUpdate(WorkerAction):
                     shutil.move(oldpath, self.fullpath)
 
                     # change subfiles / subdirectories in database
-                    for child in self._dm.store.find(db.File,
-                                                     db.File.filename.like(u'%s/%%' % oldfilename),
-                                                     db.WatchPath.path == oldwatchpath,
-                                                     db.WatchPath.id == db.File.watchpath_id
-                                                     ):
+                    for child in self._dms.find(db.File,
+                                                db.File.filename.like(u'%s/%%' % oldfilename),
+                                                db.WatchPath.path == oldwatchpath,
+                                                db.WatchPath.id == db.File.watchpath_id
+                                                ):
                         child.filename = child.filename.replace(oldfilename, self._record.filename, 1)
                         child.watchpath = self._record.watchpath
 
@@ -227,7 +222,6 @@ class DropletUpdate(WorkerAction):
         super(DropletUpdate, self).__init__(hub)
 
         self.hub = hub
-        self._dm = self.hub.database_manager
 
         self.pk = pk
         self.name = name
@@ -245,15 +239,11 @@ class DropletUpdate(WorkerAction):
     def exists(self):
         # return record if item exists in the database
         # else return False
-        return self._dm.store.find(db.File,
-                                   db.File.id == self.pk
-                                   ).one() or False
+        return self._fetch_file_record(File__id=self.pk)
 
     def cell_exists(self):
         # return True if parent exists
-        return self._dm.store.find(db.File,
-                                   db.File.id == self.cell['pk']
-                                   ).one() or False
+        return self._fetch_file_record(File__id=self.cell['pk'])
 
     def _create_record(self):
         record = db.File()
@@ -270,7 +260,7 @@ class DropletUpdate(WorkerAction):
         record.filename = pathjoin(cell.filename, self.name)
 
         # add to store
-        self._dm.store.add(record)
+        self._dms.add(record)
 
         return record
 
@@ -348,7 +338,6 @@ class DropletUpdate(WorkerAction):
 
             parent = self._get_parent()
             if parent.id != self._record.parent_id:
-                print "Move!"
                 oldfilename = self._record.filename
                 oldwatchpath = self._record.watchpath.path
 
@@ -369,15 +358,12 @@ class DropletUpdate(WorkerAction):
                 return self._get_patch()
 
     def _get_parent(self):
-        parent = self._dm.store.find(db.File,
-                                     db.File.id == self.cell['pk']
-                                     ).one()
+        parent = self._fetch_file_record(File__id=self.cell['pk'])
 
         if not parent:
-            raise RetryLater
+            raise WaitItem(self.cell['pk'])
         else:
             return parent
-
 
     def _get_file(self):
         uri = '%(server)s/api/droplet/%(droplet_id)s/revision/latest/content/' %\

@@ -18,7 +18,6 @@ class DeleteObject(WorkerAction):
 
         self.filename = filename
         self.watchpath = watchpath
-        self._dm = self._hub.database_manager
         self._record = False
 
     @property
@@ -31,11 +30,9 @@ class DeleteObject(WorkerAction):
     def exists(self):
         # return record if item exists in the database
         # else return False
-        return self._dm.store.find(db.File,
-                                   db.File.filename == self.filename,
-                                   db.WatchPath.path == self.watchpath,
-                                   db.WatchPath.id == db.File.watchpath_id
-                                   ).one() or False
+        return self._fetch_file_record(File__filename=self.filename,
+                                       WatchPath__path=self.watchpath
+                                       )
 
     def _execute(self):
         self._record = self.exists()
@@ -66,15 +63,15 @@ class DeleteDir(DeleteObject):
 
     def _delete_from_db(self):
         # delete all children
-        for entry in self._dm.store.find(db.File,
-                                         db.File.filename.like(u'%s/%%' % self.filename),
-                                         db.WatchPath.path == self.watchpath,
-                                         db.WatchPath.id == db.File.watchpath_id
-                                         ):
+        for entry in self._dms.find(db.File,
+                                    db.File.filename.like(u'%s/%%' % self.filename),
+                                    db.WatchPath.path == self.watchpath,
+                                    db.WatchPath.id == db.File.watchpath_id
+                                    ):
             entry.remove()
 
         # delete self
-        self._dm.store.remove(self._record)
+        self._dms.remove(self._record)
 
     def _delete_from_fs(self):
         # required when deleting recursivelly folders
@@ -99,7 +96,7 @@ class DeleteFile(DeleteObject):
 
     def _delete_from_db(self):
         # delete self
-        self._dm.store.remove(self._record)
+        self._dms.remove(self._record)
 
     def _delete_from_fs(self):
         # required when deleting recursivelly folders

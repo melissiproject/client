@@ -11,19 +11,14 @@ class ModifyFile(WorkerAction):
         self.filename = filename
         self.watchpath = watchpath
 
-        self._dm = self._hub.database_manager
-
-
     @property
     def fullpath(self):
         return pathjoin(self.watchpath, self.filename)
 
     def _record_get_or_create(self):
-        record = self._dm.store.find(db.File,
-                                     db.File.filename == self.filename,
-                                     db.WatchPath.path == self.watchpath,
-                                     db.WatchPath.id == db.File.watchpath_id
-                                     ).one() or False
+        record = self._fetch_file_record(File__filename=self.filename,
+                                         WatchPath__path=self.watchpath
+                                         )
 
         if not record:
             record = db.File()
@@ -33,17 +28,18 @@ class ModifyFile(WorkerAction):
             record.directory = False
             record.revision = 0
             record.parent_id = self._parent.id
-            self._dm.store.add(record)
+            self._dms.add(record)
 
         return record
 
     def _get_parent(self):
-        parent = self._dm.store.find(db.File,
-                                     db.File.filename == os.path.dirname(self.filename),
-                                     db.File.watchpath_id == db.WatchPath.id,
-                                     db.WatchPath.path == self.watchpath
-                                     ).one()
+        parent = self._fetch_file_record(File__filename=os.path.dirname(self.filename),
+                                         WatchPath__path=self.watchpath
+                                         )
+
         if not parent:
+            # sadly we cannot use WaitItem because we don't know
+            # cellid yet
             raise RetryLater
         else:
             return parent
@@ -125,8 +121,6 @@ class CreateDir(WorkerAction):
         self.filename = filename
         self.watchpath = watchpath
 
-        self._dm = self._hub.database_manager
-
     @property
     def unique_id(self):
         return self.filename
@@ -134,18 +128,14 @@ class CreateDir(WorkerAction):
     def _exists(self):
         # return record if item exists in the database
         # else return False
-        return self._dm.store.find(db.File,
-                                   db.File.filename == self.filename,
-                                   db.WatchPath.path == self.watchpath,
-                                   db.WatchPath.id == db.File.watchpath_id
-                                   ).one() or False
+        return self._fetch_file_record(File__filename=self.filename,
+                                       WatchPath__path=self.watchpath
+                                       )
 
     def _get_parent(self):
-        parent = self._dm.store.find(db.File,
-                                     db.File.filename == os.path.dirname(self.filename),
-                                     db.File.watchpath_id == db.WatchPath.id,
-                                     db.WatchPath.path == self.watchpath
-                                     ).one()
+        return self._fetch_file_record(File__filename=os.path.dirname(self.filename),
+                                       WatchPath__path=self.watchpath
+                                       )
         if not parent:
             raise RetryLater
         else:
@@ -161,7 +151,7 @@ class CreateDir(WorkerAction):
         record.parent_id = self._parent.id
 
         # add to store
-        self._dm.store.add(record)
+        self._dms.add(record)
 
         return record
 

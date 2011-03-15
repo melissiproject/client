@@ -11,28 +11,23 @@ class MoveObject(WorkerAction):
         self.old_filename = old_filename
         self.watchpath = watchpath
 
-        self._dm = self._hub.database_manager
-
     @property
     def unique_id(self):
-        return 'Move %s' % pathjoin(self.watchpath, self.filename)
+        return pathjoin(self.watchpath, self.filename)
 
     def _exists(self):
         # return record if item exists in the database
         # else return False
-        return self._dm.store.find(db.File,
-                                   db.File.filename == self.old_filename,
-                                   db.WatchPath.path == self.watchpath,
-                                   db.WatchPath.id == db.File.watchpath_id
-                                   ).one() or False
+        return self._fetch_file_record(File__filename=self.old_filename,
+                                       WatchPath__path=self.watchpath)
 
     def _get_parent(self):
-        parent = self._dm.store.find(db.File,
-                                     db.File.filename == os.path.dirname(self.filename),
-                                     db.File.watchpath_id == db.WatchPath.id,
-                                     db.WatchPath.path == self.watchpath
-                                     ).one()
+        parent = self._fetch_file_record(File__filename=os.path.dirname(self.filename),
+                                         WatchPath__path=self.watchpath
+                                         )
         if not parent:
+            # sadly we cannot use WaitItem because we don't know
+            # cellid yet
             raise RetryLater
         else:
             return parent
@@ -46,11 +41,11 @@ class MoveObject(WorkerAction):
     def _update_children(self):
         # update all subdirectories and files if this is directory
         # change subfiles / subdirectories in database
-        query = self._dm.store.find(db.File,
-                                    db.File.filename.like(u'%s/%%' % self.old_filename),
-                                    db.WatchPath.path == self._record.watchpath.path,
-                                    db.WatchPath.id == db.File.watchpath_id
-                                    )
+        query = self._dms.find(db.File,
+                               db.File.filename.like(u'%s/%%' % self.old_filename),
+                               db.WatchPath.path == self._record.watchpath.path,
+                               db.WatchPath.id == db.File.watchpath_id
+                               )
         for f in query:
             f.filename = f.filename.replace(self.old_filename, self.filename, 1)
             f.watchpath = self._parent.watchpath

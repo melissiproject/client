@@ -77,6 +77,7 @@ class WaitItem(Exception):
 class WorkerAction(object):
     def __init__(self, hub):
         self._hub = hub
+        self._dms = hub.database_manager.store
 
     @property
     def action_name(self):
@@ -89,6 +90,21 @@ class WorkerAction(object):
     @property
     def unique_id(self):
         return False
+
+    def _fetch_file_record(self, **kwargs):
+        # keys is the format
+        # File__filename is converted to db.File.filename
+        query = self._dms.find(db.File)
+        query = query.find(db.WatchPath.id == db.File.watchpath_id)
+
+        for key, value in kwargs.iteritems():
+            attr = reduce(lambda x, y: getattr(x, y),
+                          [db] + key.split("__")
+                          )
+
+            query = query.find(attr == value)
+
+        return query.one() or False
 
     def _wakeup_waiting(self, result):
         self._hub.queue.wake_up(self.unique_id)
