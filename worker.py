@@ -6,10 +6,7 @@ from twisted.internet import defer
 
 import util
 import dbschema as db
-# import actions.modify
-# import actions.delete
-# import actions.update
-# import actions.share
+
 from actions import *
 
 if __debug__:
@@ -88,4 +85,3 @@ class Worker():
     def _call_worker(self, result, when=0):
         self.hub.database_manager.commit()
         reactor.callLater(0, self.work)
-
