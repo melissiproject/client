@@ -16,12 +16,15 @@ class DesktopTray:
         self.hub = hub
         self.disable = disable
         self.items = {}
+        # for disconnecting handlers with "recent updates" menu items
+        # when the item changes
+        self._connected_handler_ids = {}
 
         if not self.disable:
             self.gladefile = {}
             # status icon
             item = gtk.StatusIcon()
-            item.set_from_file('./images/icon-ok.png')
+            item.set_from_file('./images/icon-ok.svg')
             item.set_visible(True)
             item.set_tooltip("Foobox ready")
             item.connect("activate", self.open_folder)
@@ -101,7 +104,14 @@ class DesktopTray:
                     self.items['recent-updates'].append(menu_item)
                     self.items['recent-updates-list'].append(menu_item)
                 menu_item.set_label(f.filename)
-                menu_item.connect('activate', self.open_folder, f.filename)
+                # disconnect item first
+                try:
+                    menu_item.disconnect(self._connected_handler_ids[i])
+                except KeyError:
+                    # no worries, the item was just created
+                    pass
+
+                self._connected_handler_ids[i] = menu_item.connect('activate', self.open_folder, f.filename)
                 ## menu_item.set_visible(True)
                 i += 1
 
@@ -129,25 +139,25 @@ class DesktopTray:
 
     def set_icon_offline(self, tooltip="Foobox Offline"):
         if not self.disable:
-            self.items['status-icon'].set_from_file('./images/icon-offline.png')
+            self.items['status-icon'].set_from_file('./images/icon-offline.svg')
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
     def set_icon_ok(self, tooltip="Foobox Ready"):
         if not self.disable:
-            self.items['status-icon'].set_from_file('./images/icon-ok.png')
+            self.items['status-icon'].set_from_file('./images/icon-ok.svg')
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
     def set_icon_update(self, tooltip="Foobox Working"):
         if not self.disable:
-            self.items['status-icon'].set_from_file('./images/icon-update.png')
+            self.items['status-icon'].set_from_file('./images/icon-update.svg')
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
     def set_icon_error(self, tooltip="Foobox Error"):
         if not self.disable:
-            self.items['status-icon'].set_from_file('./images/icon-error.png')
+            self.items['status-icon'].set_from_file('./images/icon-error.svg')
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
