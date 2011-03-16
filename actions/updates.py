@@ -51,17 +51,8 @@ class GetUpdates(WorkerAction):
 
 class CellUpdate(WorkerAction):
     def __init__(self, hub, pk, name, roots, owner, created, updated, deleted):
-        assert isinstance(pk, basestring)
-        assert isinstance(name, basestring)
-        assert isinstance(roots, list)
-        assert isinstance(owner, dict)
-        assert isinstance(deleted, bool)
-        assert isinstance(created, basestring)
-        assert isinstance(updated, basestring)
-
         super(CellUpdate, self).__init__(hub)
 
-        self.hub = hub
         self.pk = pk
         self.name = name
         self.roots = roots
@@ -147,7 +138,7 @@ class CellUpdate(WorkerAction):
             util.create_path(self.fullpath)
 
             # add a new watch
-            self.hub.notify_manager.add_watch(self.fullpath)
+            self._hub.notify_manager.add_watch(self.fullpath)
 
         # we know the file
         else:
@@ -210,18 +201,7 @@ class CellUpdate(WorkerAction):
 
 class DropletUpdate(WorkerAction):
     def __init__(self, hub, pk, name, cell, owner, created, updated, deleted, revisions):
-        assert isinstance(pk, basestring)
-        assert isinstance(name, basestring)
-        assert isinstance(cell, dict)
-        assert isinstance(owner, dict)
-        assert isinstance(deleted, bool)
-        assert isinstance(created, basestring)
-        assert isinstance(updated, basestring)
-        assert isinstance(revisions, list)
-
         super(DropletUpdate, self).__init__(hub)
-
-        self.hub = hub
 
         self.pk = pk
         self.name = name
@@ -369,7 +349,7 @@ class DropletUpdate(WorkerAction):
         uri = '%(server)s/api/droplet/%(droplet_id)s/revision/latest/content/' %\
               {'server': self._hub.config_manager.get_server(),
                'droplet_id': self.pk}
-        d = self.hub.rest_client.get(str(uri))
+        d = self._hub.rest_client.get(str(uri))
         d.addCallback(self._get_file_success)
         d.addErrback(self._failure)
 
@@ -389,7 +369,7 @@ class DropletUpdate(WorkerAction):
         uri = '%(server)s/api/droplet/%(droplet_id)s/revision/latest/patch/' %\
               {'server': self._hub.config_manager.get_server(),
                'droplet_id': self.pk}
-        d = self.hub.rest_client.get(str(uri))
+        d = self._hub.rest_client.get(str(uri))
         d.addCallback(self._get_patch_success)
         d.addErrback(self._failure)
 
