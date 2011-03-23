@@ -43,8 +43,6 @@ class Worker():
         if item not in self._hub.queue:
             self.processing = True
             self._hub.desktop_tray.set_icon_update("Melisi Working")
-            # maybe an overkill to call each item
-            self._hub.desktop_tray.set_recent_updates()
             self.process_item(item)
 
     def process_item(self, item):
@@ -90,4 +88,8 @@ class Worker():
 
     def _call_worker(self, result, when=0):
         self._hub.database_manager.commit()
+
+        # maybe an overkill to call each item
+        self._hub.desktop_tray.set_recent_updates()
+
         reactor.callLater(0, self.work)
