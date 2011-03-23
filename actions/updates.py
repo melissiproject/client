@@ -40,7 +40,8 @@ class GetUpdates(WorkerAction):
 
         # todo
         # update timestamp
-        # notifications
+
+        # recall self
         self._add_to_queue(GetUpdates(hub=self._hub), when=10)
 
     def _failure(self, result):
@@ -60,6 +61,8 @@ class CellUpdate(WorkerAction):
         self.deleted = deleted
         self.created = util.parse_datetime(created)
         self.updated = util.parse_datetime(updated)
+
+        self._new = True
 
     @property
     def unique_id(self):
@@ -104,9 +107,20 @@ class CellUpdate(WorkerAction):
 
         return record
 
-    def notify(self):
+    def _send_notification(self):
         """ Display notification """
-        return
+        if self.deleted:
+            verb = 'deleted'
+        elif self._new:
+            verb = 'created'
+        else:
+            verb = 'updated'
+        self._hub.queue.put_into_notification_list(self.name,
+                                                   self.fullpath,
+                                                   os.path.dirname(self.fullpath),
+                                                   self.owner,
+                                                   verb
+                                                   )
 
     @property
     def fullpath(self):
@@ -116,6 +130,8 @@ class CellUpdate(WorkerAction):
     def _execute(self):
         # if we don't know the file:
         if not self.exists():
+            self._new = True
+
             # if root do something
             if self.is_root():
                 # new repository
@@ -142,6 +158,8 @@ class CellUpdate(WorkerAction):
 
         # we know the file
         else:
+            self._new = False
+
             if self.is_root():
                 return
             elif not self.parent_exists():
@@ -196,8 +214,15 @@ class CellUpdate(WorkerAction):
                         child.filename = child.filename.replace(oldfilename, self._record.filename, 1)
                         child.watchpath = self._record.watchpath
 
+                else:
+                    # nothing happened
+                    return
+
         # update modified time
         self._record.modified = self.updated
+
+        # notify user
+        self._fire_notification = True
 
 class DropletUpdate(WorkerAction):
     def __init__(self, hub, pk, name, cell, owner, created, updated, deleted, revisions):
@@ -211,6 +236,8 @@ class DropletUpdate(WorkerAction):
         self.created = util.parse_datetime(created)
         self.updated = util.parse_datetime(updated)
         self.revisions = revisions
+
+        self._new = True
 
     @property
     def unique_id(self):
@@ -258,9 +285,21 @@ class DropletUpdate(WorkerAction):
                  (int(a_datetime.strftime("%s")),
                   int(m_datetime.strftime("%s"))))
 
-    def notify(self):
-        pass
 
+    def _send_notification(self):
+        if self.deleted:
+            verb = 'deleted'
+        elif self._new:
+            verb = 'created'
+        else:
+            verb = 'updated'
+
+        self._hub.queue.put_into_notification_list(self.name,
+                                                   self.fullpath,
+                                                   os.path.dirname(self.fullpath),
+                                                   self.owner,
+                                                   verb
+                                                   )
     @property
     def fullpath(self):
         if self._record:
@@ -280,40 +319,42 @@ class DropletUpdate(WorkerAction):
         # if we don't know the file:
         self._record = self.exists()
         if not self._record:
-             # and it's already delete don't worry
-             if self.deleted:
-                 return True
+            self._new = True
+            # and it's already delete don't worry
+            if self.deleted:
+                return True
 
-             # if cell does not exist, add to queue
-             elif not self.cell_exists():
-                 raise WaitItem(self.cell['pk'])
+            # if cell does not exist, add to queue
+            elif not self.cell_exists():
+                raise WaitItem(self.cell['pk'])
 
-             self._record = self._create_record()
-             cell = self.cell_exists()
+            self._record = self._create_record()
+            cell = self.cell_exists()
 
-             # check if for some reason we already have the file
-             if os.path.exists(self.fullpath) and \
-                util.get_hash(self.fullpath) == self._record.hash:
+            # check if for some reason we already have the file
+            if os.path.exists(self.fullpath) and \
+                   util.get_hash(self.fullpath) == self._record.hash:
 
-                 # ensure that we can read/write it
-                 self.fix_permissions()
+                # ensure that we can read/write it
+                self.fix_permissions()
 
-                 # generate signarute
-                 self._record.signature = self._generate_signature()
+                # generate signarute
+                self._record.signature = self._generate_signature()
 
-             else:
-                 # we need to fetch the file
-                 # return deferred
-                 return self._get_file()
+            else:
+                # we need to fetch the file
+                # return deferred
+                return self._get_file()
 
         # we know the file
         else:
+            self._new = False
             # if deleted call a delete
             if self.deleted:
-                self._hub.queue.put(DeleteFile(self._hub,
-                                               self._record.filename,
-                                               self._record.watchpath.path)
-                                    )
+                # self._hub.queue.put(DeleteFile(self._hub,
+                #                                self._record.filename,
+                #                                self._record.watchpath.path)
+                #                     )
                 raise DropItem("I forked a delete")
 
             parent = self._get_parent()
@@ -365,6 +406,9 @@ class DropletUpdate(WorkerAction):
         self._record.modified = self.updated
         self._record.revision = len(self.revisions)
 
+        # notify user
+        self._fire_notification = True
+
     def _get_patch(self):
         uri = '%(server)s/api/droplet/%(droplet_id)s/revision/latest/patch/' %\
               {'server': self._hub.config_manager.get_server(),
@@ -403,6 +447,9 @@ class DropletUpdate(WorkerAction):
         self._record.signature = self._generate_signature()
         self._record.revision = len(self.revisions)
         self._record.modified = self.updated
+
+        # notify user
+        self._fire_notification = True
 
     def _failure(self, result):
         if __debug__:
