@@ -115,7 +115,7 @@ class CellUpdate(WorkerAction):
         elif self._new:
             verb = 'created'
         else:
-            verb = 'updated'
+            verb = 'edited'
         self._hub.queue.put_into_notification_list(self.name,
                                                    self.fullpath,
                                                    os.path.dirname(self.fullpath),
@@ -287,7 +287,7 @@ class DropletUpdate(WorkerAction):
         elif self._new:
             verb = 'created'
         else:
-            verb = 'updated'
+            verb = 'edited'
 
         self._hub.queue.put_into_notification_list(self.name,
                                                    self.fullpath,
