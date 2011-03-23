@@ -79,6 +79,8 @@ class WorkerAction(object):
         self._hub = hub
         self._dms = hub.database_manager.store
 
+        self._fire_notification = False
+
     @property
     def action_name(self):
         if self.unique_id:
@@ -89,7 +91,16 @@ class WorkerAction(object):
 
     @property
     def unique_id(self):
-        return False
+        return "'unknown' (type: %s)" % self.__class__.__name__
+
+    def _send_notification(self):
+        return
+
+    def _notify(self, *args, **kwargs):
+        # maybe called in a deffered list, with a result
+        # which we can safelly ignore
+        if self._fire_notification:
+            self._send_notification()
 
     def _fetch_file_record(self, **kwargs):
         # keys is the format
@@ -113,13 +124,11 @@ class WorkerAction(object):
         raise NotImplementedError("WorkerAction not implemented error")
 
     def __call__(self):
-        if __debug__:
-            dprint("Executing ", self.action_name)
-
         # TODO maybe we should handle DropItems here since we need to
         # call _wakeup_waiting as well
 
         d = defer.maybeDeferred(self._execute)
+        d.addCallback(self._notify)
         d.addCallback(self._wakeup_waiting)
         return d
 
@@ -133,3 +142,4 @@ from modify import *
 from updates import *
 from delete import *
 from move import *
+from notify import *
