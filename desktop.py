@@ -26,7 +26,7 @@ class DesktopTray:
             item = gtk.StatusIcon()
             item.set_from_file('./images/icon-ok.svg')
             item.set_visible(True)
-            item.set_tooltip("Foobox ready")
+            item.set_tooltip("Melisi ready")
             item.connect("activate", self.open_folder)
             self.items['status-icon'] = item
 
@@ -36,7 +36,7 @@ class DesktopTray:
             self.items['status-icon'].set_visible(1)
 
             # open folder menu entry
-            item = gtk.MenuItem("Open Foobox Folder")
+            item = gtk.MenuItem("Open Melisi Folder")
             item.connect('activate', self.open_folder)
             menu.append(item)
 
@@ -137,25 +137,25 @@ class DesktopTray:
         if not self.disable:
             self.items['connection-menu-item'].set_label("Disconnect")
 
-    def set_icon_offline(self, tooltip="Foobox Offline"):
+    def set_icon_offline(self, tooltip="Melisi Offline"):
         if not self.disable:
             self.items['status-icon'].set_from_file('./images/icon-offline.svg')
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
-    def set_icon_ok(self, tooltip="Foobox Ready"):
+    def set_icon_ok(self, tooltip="Melisi Ready"):
         if not self.disable:
             self.items['status-icon'].set_from_file('./images/icon-ok.svg')
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
-    def set_icon_update(self, tooltip="Foobox Working"):
+    def set_icon_update(self, tooltip="Melisi Working"):
         if not self.disable:
             self.items['status-icon'].set_from_file('./images/icon-update.svg')
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
-    def set_icon_error(self, tooltip="Foobox Error"):
+    def set_icon_error(self, tooltip="Melisi Error"):
         if not self.disable:
             self.items['status-icon'].set_from_file('./images/icon-error.svg')
             self.items['status-icon'].set_tooltip(tooltip)
