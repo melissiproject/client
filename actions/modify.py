@@ -147,7 +147,7 @@ class CreateDir(WorkerAction):
         record.hash = None
         record.watchpath_id = self._parent.watchpath.id
         record.directory = True
-        record.revision = 0
+        record.revision = None
         record.parent_id = self._parent.id
 
         # add to store
@@ -166,9 +166,10 @@ class CreateDir(WorkerAction):
         # create record
         self._record = self._create_record()
 
+
         uri = '%s/api/cell/' % (self._hub.config_manager.get_server())
         data = {'name': os.path.basename(self.filename),
-                'parent':self._record.parent.id
+                'parent':self._parent.id
                 }
         d = self._hub.rest_client.post(str(uri), data=data)
         d.addCallback(self._success)
@@ -179,6 +180,7 @@ class CreateDir(WorkerAction):
     def _success(self, result):
         result = json.load(result)
         self._record.id = result['reply']['pk']
+        self._record.modified = util.parse_datetime(result['reply']['created'])
 
     def _failure(self, error):
         if __debug__:
