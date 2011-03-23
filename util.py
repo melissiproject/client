@@ -106,35 +106,6 @@ def create_path(path):
             pass
         else: raise
 
-def get_gravatar_image(email):
-    def add_gravatar(result, userhash, filename):
-        gravatars[userhash] = filename
-    userhash = hashlib.md5(email).hexdigest()
-    path = 'melisi-gravatar-%s.jpg' % userhash
-    if userhash not in gravatars:
-        tf = tempfile.NamedTemporaryFile(suffix='.jpg', prefix='melisi-gravatar-', dir='/tmp', delete=False)
-        d = client.downloadPage('http://www.gravatar.com/avatar/' + userhash, tf)
-        d.addCallback(add_gravatar, userhash, tf.name)
-    return d
-
-def desktop_update_notification(title, message, email):
-    userhash = hashlib.md5(email).hexdigest()
-    def show_notification(result, title, message):
-        try:
-            pynotify.Notification(title, message, gravatars[userhash]).show()
-        except GError:
-            # probably we reach stack-limit of 50, no worries, display nothing
-            pass
-
-    if userhash not in gravatars:
-        d = get_gravatar_image(email)
-        d.addCallback(show_notification, title, message)
-    else:
-        show_notification(None, title, message)
-
-def desktop_many_update_notifications():
-    pass
-
 def check_keys_in_data(keys, data, exact_data=True, set_default=True):
     """Check if keys in data exist, set default values, return data.
 
