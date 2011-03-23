@@ -37,9 +37,13 @@ class NotifyUser(WorkerAction):
         # 'new' is True when the file is new and false when the file is updated
         notifications = self._hub.queue.pop_notification_list()
 
-        # if user does not want notifications, do nothing
-        if self._hub.config_manager.config.get('main', 'desktop-notifications') == 'False':
+        # if user does not want notifications, or there are no
+        # notifications do nothing
+        if self._hub.config_manager.config.get('main', 'desktop-notifications') == 'False' or \
+               len(notifications) == 0:
             return
+
+
 
         # if one
         if len(notifications) == 1:
