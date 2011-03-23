@@ -103,6 +103,15 @@ class DesktopTray:
                     menu_item = gtk.ImageMenuItem()
                     self.items['recent-updates-menu'].append(menu_item)
                     self.items['recent-updates-list'].append(menu_item)
+
+                # set menu image
+                image = gtk.Image()
+                if f.directory:
+                    image.set_from_stock(gtk.STOCK_DIRECTORY, gtk.ICON_SIZE_MENU)
+                else:
+                    image.set_from_stock(gtk.STOCK_FILE, gtk.ICON_SIZE_MENU)
+                menu_item.set_image(image)
+
                 menu_item.set_label(f.filename)
                 # disconnect item first
                 try:
