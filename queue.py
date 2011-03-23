@@ -2,12 +2,17 @@ if __debug__:
     from twisted.internet import reactor
     from Print import dprint
 class Queue(object):
-    """ Simple queue class, we don't care if it is thread safe
-    since we run in single thread twisted, right? """
+    """ Simple Queue Service.
+
+    Provides queues for actions to be executed asap, for actions
+    waiting for other actions and for desktop notifications
+
+    """
 
     def __init__(self, hub):
         from collections import deque
         self.queue = deque()
+        self._notifications = []
         self.waiting_list = {}
         self.hub = hub
 
@@ -44,3 +49,17 @@ class Queue(object):
                 self.put(item)
 
             del(self.waiting_list[waiting_id])
+
+    def put_into_notification_list(self, name, filepath, dirpath, owner, verb):
+        """ owner is a dictionary with username, email, name """
+        self._notifications.append({'name': name,
+                                    'filepath': filepath,
+                                    'dirpath': dirpath,
+                                    'owner': owner,
+                                    'verb': verb
+                                    })
+
+    def pop_notification_list(self):
+        tmp = self._notifications[:]
+        self._notifications = []
+        return tmp
