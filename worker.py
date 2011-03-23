@@ -14,31 +14,37 @@ if __debug__:
 
 class Worker():
     def __init__(self, hub):
-        self.hub = hub
-        self._dms = self.hub.database_manager.store
+        self._hub = hub
+        self._dms = self._hub.database_manager.store
         self.processing = False
 
     def work(self):
         # TODO: find a better async way
-        if self.hub.rest_client.offline:
+        if self._hub.rest_client.offline:
             return
 
         try:
-            item = self.hub.queue.get()
+            item = self._hub.queue.get()
         except IndexError:
             if self.processing:
                 self.processing = False
-                self.hub.desktop_tray.set_icon_ok()
+                self._hub.desktop_tray.set_icon_ok()
 
-            reactor.callLater(1, self.work)
+                # notify
+                item = NotifyUser(hub=self._hub)
+                self.process_item(item)
+
+            else:
+                reactor.callLater(1, self.work)
+
             return
 
         # only if the item is not in the queue again
-        if item not in self.hub.queue:
+        if item not in self._hub.queue:
             self.processing = True
-            self.hub.desktop_tray.set_icon_update("Melisi Working")
+            self._hub.desktop_tray.set_icon_update("Melisi Working")
             # maybe an overkill to call each item
-            self.hub.desktop_tray.set_recent_updates()
+            self._hub.desktop_tray.set_recent_updates()
             self.process_item(item)
 
     def process_item(self, item):
@@ -47,13 +53,14 @@ class Worker():
             dprint("Worker processing ", item.action_name)
 
         d = defer.maybeDeferred(item)
+        print item.action_name, d
         d.addErrback(self._action_failure, item)
         d.addBoth(self._call_worker)
 
     def _action_failure(self, failure, item):
         # rollback database
         print "rolling back", item
-        self.hub.database_manager.rollback()
+        self._hub.database_manager.rollback()
 
         try:
             failure.raiseException()
@@ -61,12 +68,12 @@ class Worker():
         except WaitItem, e:
             if __debug__:
                 dprint("Item %s waits for %s" % (item.pk, e.id))
-            self.hub.queue.put_into_waiting_list(e.id, item)
+            self._hub.queue.put_into_waiting_list(e.id, item)
 
         except RetryLater, e:
             if __debug__:
                 dprint("Need to retry later")
-            reactor.callLater(e.time, self.hub.queue.put, item)
+            reactor.callLater(e.time, self._hub.queue.put, item)
 
         except DropItem, e:
             if __debug__:
@@ -83,5 +90,5 @@ class Worker():
         # e.g. if we are retrying or giving up
 
     def _call_worker(self, result, when=0):
-        self.hub.database_manager.commit()
+        self._hub.database_manager.commit()
         reactor.callLater(0, self.work)
