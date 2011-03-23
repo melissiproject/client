@@ -2,6 +2,7 @@
 # GetUpdates
 # CellUpdate
 # DropletUpdate
+from shutil import rmtree
 from actions import *
 
 class GetUpdates(WorkerAction):
@@ -171,22 +172,16 @@ class CellUpdate(WorkerAction):
             # file was deleted
             if self.deleted:
                 # remove from filesystem
-                from shutil import rmtree
-                try:
-                    shutil.rmtree(self.fullpath)
-                except (IOError, OSError), error_message:
-                    if __debug__:
-                        dprint("An (not important) exception occured",
-                               error_message,
-                               exception=1)
+                shutil.rmtree(self.fullpath, ignore_errors=True)
 
-                # remove from database
+                # remove children and self from database
                 for child in self._dms.find(db.File,
                                             db.File.filename.like(u'%s/%%' % self._record.filename),
                                             db.WatchPath.path == self._record.watchpath.path,
                                             db.WatchPath.id == db.File.watchpath_id
                                             ):
                     self._dms.remove(child)
+
 
             # file was updated
             else:
@@ -351,11 +346,20 @@ class DropletUpdate(WorkerAction):
             self._new = False
             # if deleted call a delete
             if self.deleted:
-                # self._hub.queue.put(DeleteFile(self._hub,
-                #                                self._record.filename,
-                #                                self._record.watchpath.path)
-                #                     )
-                raise DropItem("I forked a delete")
+                # remove from fs
+                try:
+                    os.unlink(self.fullpath)
+                except OSError, error_message:
+                    if __debug__:
+                        dprint("Error while removing file %s maybe not important" %\
+                               self.fullpath, exception=1)
+
+                # remove from db
+                self._dms.remove(self._record)
+
+                # notify user
+                self._fire_notification = True
+                return
 
             parent = self._get_parent()
             if parent.id != self._record.parent_id:
