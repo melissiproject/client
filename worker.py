@@ -53,7 +53,6 @@ class Worker():
             dprint("Worker processing ", item.action_name)
 
         d = defer.maybeDeferred(item)
-        print item.action_name, d
         d.addErrback(self._action_failure, item)
         d.addBoth(self._call_worker)
 

@@ -129,7 +129,16 @@ class RestClient():
 
         def request_ok(response):
             myReceiver.code = response.code
-            response.deliverBody(myReceiver)
+
+            # workaround when sending a DELETE it seems that
+            # connectionLost is never called from some reason also
+            # dilverBody does not call dataReceived (because there are
+            # to data). Anyway if that's the case, call connection
+            # lost manually
+            if response.code == 204 and response.length == 0:
+                myReceiver.connectionLost(None)
+            else:
+                response.deliverBody(myReceiver)
 
         request.addCallback(request_ok)
 
