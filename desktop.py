@@ -46,7 +46,7 @@ class DesktopTray:
 
             # recent update menu entry, submenu
             submenu = gtk.Menu()
-            self.items['recent-updates'] = submenu
+            self.items['recent-updates-menu'] = submenu
             item.set_submenu(submenu)
 
             # More updates submenu entry
@@ -101,7 +101,7 @@ class DesktopTray:
                     menu_item = self.items['recent-updates-list'][i]
                 except IndexError:
                     menu_item = gtk.ImageMenuItem()
-                    self.items['recent-updates'].append(menu_item)
+                    self.items['recent-updates-menu'].append(menu_item)
                     self.items['recent-updates-list'].append(menu_item)
                 menu_item.set_label(f.filename)
                 # disconnect item first
@@ -114,6 +114,12 @@ class DesktopTray:
                 self._connected_handler_ids[i] = menu_item.connect('activate', self.open_folder, f.filename)
                 ## menu_item.set_visible(True)
                 i += 1
+
+        # remove extra entries if we move from more updates to less
+        for k in range(i, len(self.items['recent-updates-list'])):
+            menu_item = self.items['recent-updates-list'][k]
+            menu_item.disconnect(self._connected_handler_ids[k])
+            self.items['recent-updates-menu'].remove(menu_item)
 
     def set_menu_info(self, message):
         if not self.disable:
