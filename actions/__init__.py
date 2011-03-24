@@ -105,7 +105,7 @@ class WorkerAction(object):
         self._write_log()
 
         # clear entries older than a month\
-        a_month_ago = datetime.now() - timedelta(months=1)
+        a_month_ago = datetime.now() - timedelta(days=30)
         map(lambda x: self._dms.remove(x), self._dms.find(db.LogEntry,
                                                           db.LogEntry.timestamp < a_month_ago)
             )
