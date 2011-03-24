@@ -28,7 +28,7 @@ SCHEMA_LOG = '''CREATE TABLE log (id INTEGER PRIMARY KEY,
                                   username TEXT,
                                   email TEXT,
                                   action TEXT,
-                                  action_type TEXT,
+                                  extra TEXT,
                                   file_id TEXT
                                   );'''
 
@@ -71,7 +71,7 @@ class LogEntry(object):
     username = Unicode()
     email = Unicode()
     action = Unicode()
-    action_type = Unicode()
+    extra = Unicode()
     file_id = Unicode()
     file = Reference(file_id, File.id)
 
