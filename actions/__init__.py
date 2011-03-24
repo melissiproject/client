@@ -3,7 +3,7 @@
 import json
 import tempfile
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from os.path import join as pathjoin
 import shutil
 
@@ -79,7 +79,7 @@ class WorkerAction(object):
         self._hub = hub
         self._dms = hub.database_manager.store
 
-        self._fire_notification = False
+        self._action_taken = False
 
     @property
     def action_name(self):
@@ -96,10 +96,24 @@ class WorkerAction(object):
     def _send_notification(self):
         return
 
+    def _write_log(self):
+        return
+
+    def _log(self, *args, **kwargs):
+        # maybe called in a deffered list, with a result
+        # which we can safelly ignore
+        self._write_log()
+
+        # clear entries older than a month\
+        a_month_ago = datetime.now() - timedelta(months=1)
+        map(lambda x: self._dms.remove(x), self._dms.find(db.LogEntry,
+                                                          db.LogEntry.timestamp < a_month_ago)
+            )
+
     def _notify(self, *args, **kwargs):
         # maybe called in a deffered list, with a result
         # which we can safelly ignore
-        if self._fire_notification:
+        if self._action_taken:
             self._send_notification()
 
     def _fetch_file_record(self, **kwargs):
@@ -129,6 +143,7 @@ class WorkerAction(object):
 
         d = defer.maybeDeferred(self._execute)
         d.addCallback(self._notify)
+        d.addCallback(self._log)
         d.addCallback(self._wakeup_waiting)
         return d
 
