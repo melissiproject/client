@@ -65,7 +65,7 @@ class NotifyUser(WorkerAction):
 
         else:
             # do something else
-            message = "Updates from %(names)s%(others)s in multiple files"
+            message = "Multiple updates from %(names)s%(others)s"
             self._show_notification(os.path.abspath("./images/icon-ok.svg"),
                                     "Updates",
                                     message % ({'names': ', '.join(set(' '.join((n['owner']['first_name'], n['owner']['last_name'])) for n in notifications[:2])),
