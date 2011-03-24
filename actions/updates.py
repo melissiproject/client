@@ -113,7 +113,7 @@ class CellUpdate(WorkerAction):
         # and if yes, do nothing
         if self._dms.find(db.LogEntry,
                           db.LogEntry.timestamp == self.updated,
-                          db.LogEntry.file_id == self._record.id
+                          db.LogEntry.file_id == self.pk
                           ).one():
             return
 
@@ -123,7 +123,7 @@ class CellUpdate(WorkerAction):
         logentry.last_name = self.owner['last_name']
         logentry.username = self.owner['username']
         logentry.email = self.owner['email']
-        logentry.file = self._record
+        logentry.file = self.pk
         if self.deleted:
             verb = u'deleted'
         elif self._new:
@@ -131,7 +131,7 @@ class CellUpdate(WorkerAction):
         else:
             verb = u'edited'
         logentry.action = verb
-        logentry.action_type = u'directory'
+        logentry.extra = unicode(json.dumps({'type': u'directory', 'name': self.name}))
 
         self._dms.add(logentry)
 
@@ -312,7 +312,7 @@ class DropletUpdate(WorkerAction):
         # and if yes, do nothing
         if self._dms.find(db.LogEntry,
                           db.LogEntry.timestamp == self.updated,
-                          db.LogEntry.file_id == self._record.id
+                          db.LogEntry.file_id == self.pk
                           ).one():
             return
 
@@ -322,7 +322,8 @@ class DropletUpdate(WorkerAction):
         logentry.last_name = self.owner['last_name']
         logentry.username = self.owner['username']
         logentry.email = self.owner['email']
-        logentry.file = self._record
+        logentry.file = self.pk
+
         if self.deleted:
             verb = u'deleted'
         elif self._new:
@@ -330,7 +331,7 @@ class DropletUpdate(WorkerAction):
         else:
             verb = u'edited'
         logentry.action = verb
-        logentry.action_type = u'file'
+        logentry.extra = unicode(json.dumps({'type': u'file', 'name': self.name}))
 
         self._dms.add(logentry)
 
