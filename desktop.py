@@ -105,7 +105,7 @@ class DesktopTray:
         i = 0
         q = self.hub.database_manager.store.find(db.File,
                                                  db.File.filename != u'')
-        for f in q.order_by(db.Desc(db.File.modified))[:10]:
+        for f in q.order_by(db.Desc(db.File.modified))[:30]:
             try:
                 menu_item = self.items['recent-updates-list'][i]
             except IndexError:
