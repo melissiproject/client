@@ -105,7 +105,7 @@ class DesktopTray:
         i = 0
         q = self.hub.database_manager.store.find(db.File,
                                                  db.File.filename != u'')
-        for f in q.order_by(db.Desc(db.File.modified))[:30]:
+        for f in q.order_by(db.Desc(db.File.modified))[:10]:
             try:
                 menu_item = self.items['recent-updates-list'][i]
             except IndexError:
@@ -222,7 +222,7 @@ class DesktopTray:
         yesterday = datetime.today() - timedelta(days=1)
 
         q = self.hub.database_manager.store.find(db.LogEntry)
-        for e in q.order_by(db.Desc(db.LogEntry.timestamp), db.Desc(db.LogEntry.id))[:10]:
+        for e in q.order_by(db.Desc(db.LogEntry.timestamp), db.Desc(db.LogEntry.id))[:30]:
             if e.file and e.file.filename == '': continue
 
             entry = recent_updates_template.ENTRY % {
