@@ -51,6 +51,10 @@ ol.updates {
 }
 
 
+li.noentries {
+ font-size: 0.71em;
+}
+
 li.update {
  border-bottom: 1px solid #e6e6e6;
  padding-bottom: 5px;
@@ -73,6 +77,7 @@ li:last-child {
 
 .meta {
  font-size: 0.65em;
+ color: grey;
 }
 
 .thumb {
@@ -86,6 +91,11 @@ li:last-child {
  /* bottom: 12px; */
  padding-right: 10px;
  font-size: 0.65em;
+}
+
+.actions a {
+ text-decoration: none;
+ color: grey;
 }
 </style>
 </head>
@@ -123,15 +133,22 @@ ENTRY = """
   <span class="action-body">
    <span class="content">
    <a href="#" class="email">%(first_name)s %(last_name)s</a>
-   %(verb)s %(action_type)s <a href="file://%(fileurl)s" class="file">%(name)s</a>
+   %(verb)s %(type)s <a href="file://%(fileurl)s" class="file">%(name)s</a>
    </span>
    <span class="meta">
    about %(time)s
    </span>
    <span class="actions">
-   view revisions
+   <a href="%(view_revisions_url)s">view revisions</a>
    </span>
   </span>
   </li>
 
+"""
+
+
+NO_ENTRIES = """
+ <li class="noentries">
+  No entries...
+ </li>
 """

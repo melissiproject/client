@@ -10,11 +10,14 @@ pygtk.require('2.0')
 import gtk
 import gtk.glade
 import webkit
+import json
 from datetime import datetime, timedelta
 
 import util
 import dbschema as db
 import recent_updates_template
+
+WEBKIT_WEB_NAVIGATION_REASON_OTHER = 5
 
 class DesktopTray:
     def __init__(self, hub, disable=False):
@@ -217,20 +220,22 @@ class DesktopTray:
 
         today = datetime.today()
         yesterday = datetime.today() - timedelta(days=1)
-        q = self.hub.database_manager.store.find(db.LogEntry,
-                                                 db.File.filename != u'',
-                                                 db.File.id == db.LogEntry.file_id)
 
+        q = self.hub.database_manager.store.find(db.LogEntry)
         for e in q.order_by(db.Desc(db.LogEntry.timestamp), db.Desc(db.LogEntry.id))[:10]:
-            entry = recent_updates_template.ENTRY % {'emailhash': hashlib.md5(e.email).hexdigest(),
-                                                     'first_name': e.first_name,
-                                                     'last_name': e.last_name,
-                                                     'verb': e.action,
-                                                     'action_type': e.action_type,
-                                                     'fileurl':pathjoin(e.file.watchpath.path, e.file.filename),
-                                                     'name':basename(e.file.filename),
-                                                     'time':util.timesince(e.timestamp),
-                                                      }
+            if e.file and e.file.filename == '': continue
+
+            entry = recent_updates_template.ENTRY % {
+                'emailhash': hashlib.md5(e.email).hexdigest(),
+                'first_name': e.first_name,
+                'last_name': e.last_name,
+                'verb': e.action,
+                'type': json.loads(e.extra)['type'],
+                'fileurl': pathjoin(e.file.watchpath.path, e.file.filename) if e.file else '',
+                'name': basename(e.file.filename) if e.file else json.loads(e.extra)['name'],
+                'time': util.timesince(e.timestamp),
+                'view_revisions_url': 'http://www.melisi.org',
+                }
 
             if e.timestamp.day == today.day and \
                e.timestamp.month == today.month and \
@@ -244,6 +249,14 @@ class DesktopTray:
 
             else:
                 olderentries += entry
+
+        # place default string for empty days
+        if not todaysentries:
+            todaysentries = recent_updates_template.NO_ENTRIES
+        if not yesterdaysentries:
+            yesterdaysentries = recent_updates_template.NO_ENTRIES
+        if not olderentries:
+            olderentries = recent_updates_template.NO_ENTRIES
 
         return recent_updates_template.MAIN % {'todaysentries': todaysentries,
                                                'yesterdaysentries': yesterdaysentries,
@@ -260,8 +273,26 @@ class DesktopTray:
         # create browser
         scrolled_window = self.gladefile["recent-updates"].get_widget("scrolledwindow1")
         webview = webkit.WebView()
+        settings = webview.get_settings()
+
+        # disable plugins
+        settings.set_property("enable-plugins", False)
+
         # disable right click
-        webview.get_settings().set_property("enable_default_context_menu", False)
+        settings.set_property("enable_default_context_menu", False)
+
+        # connect navigation signals
+        def _link_clicked(browser, frame, request,
+                         action, decision, *args, **kwargs):
+            if action.get_reason() == WEBKIT_WEB_NAVIGATION_REASON_OTHER:
+                # let this load
+                pass
+            else:
+                # open file in system
+                util.open_file(action.get_original_uri())
+                # ignore webkit request
+                decision.ignore()
+        webview.connect("navigation_policy_decision_requested", _link_clicked)
 
         # add to window
         scrolled_window.add(webview)
@@ -277,7 +308,7 @@ class DesktopTray:
         button_refresh = self.gladefile["recent-updates"].get_widget("refresh")
         button_refresh.connect_object("clicked",
                                       lambda x: webview.load_html_string(
-                                          self._create_more_updates_page,
+                                          self._create_more_updates_page(),
                                           "file://"),
                                       True
                                       )
