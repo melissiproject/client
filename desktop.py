@@ -268,6 +268,10 @@ class DesktopTray:
         # create browser
         scrolled_window = self.gladefile["recent-updates"].get_widget("scrolledwindow1")
         webview = webkit.WebView()
+        # disable right click
+        webview.get_settings().set_property("enable_default_context_menu", False)
+
+        # add to window
         scrolled_window.add(webview)
 
         # create page
