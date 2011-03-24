@@ -108,14 +108,41 @@ class CellUpdate(WorkerAction):
 
         return record
 
+    def _write_log(self):
+        # check if entry already exists
+        # and if yes, do nothing
+        if self._dms.find(db.LogEntry,
+                          db.LogEntry.timestamp == self.updated,
+                          db.LogEntry.file_id == self._record.id
+                          ).one():
+            return
+
+        logentry = db.LogEntry()
+        logentry.timestamp = self.updated
+        logentry.first_name = self.owner['first_name']
+        logentry.last_name = self.owner['last_name']
+        logentry.username = self.owner['username']
+        logentry.email = self.owner['email']
+        logentry.file = self._record
+        if self.deleted:
+            verb = u'deleted'
+        elif self._new:
+            verb = u'created'
+        else:
+            verb = u'edited'
+        logentry.action = verb
+        logentry.action_type = u'directory'
+
+        self._dms.add(logentry)
+
     def _send_notification(self):
         """ Display notification """
         if self.deleted:
-            verb = 'deleted'
+            verb = u'deleted'
         elif self._new:
-            verb = 'created'
+            verb = u'created'
         else:
-            verb = 'edited'
+            verb = u'edited'
         self._hub.queue.put_into_notification_list(self.name,
                                                    self.fullpath,
                                                    os.path.dirname(self.fullpath),
@@ -130,7 +157,8 @@ class CellUpdate(WorkerAction):
 
     def _execute(self):
         # if we don't know the file:
-        if not self.exists():
+        self._record = self.exists()
+        if not self._record:
             self._new = True
 
             # if root do something
@@ -166,8 +194,6 @@ class CellUpdate(WorkerAction):
             elif not self.parent_exists():
                 # if parent does not exist, add to queue
                 raise WaitItem(self.roots[0]['pk'])
-
-            self._record = self.exists()
 
             # file was deleted
             if self.deleted:
@@ -217,7 +243,7 @@ class CellUpdate(WorkerAction):
         self._record.modified = self.updated
 
         # notify user
-        self._fire_notification = True
+        self._action_taken = True
 
 class DropletUpdate(WorkerAction):
     def __init__(self, hub, pk, name, cell, owner, created, updated, deleted, revisions):
@@ -281,13 +307,40 @@ class DropletUpdate(WorkerAction):
                   int(m_datetime.strftime("%s"))))
 
 
+    def _write_log(self):
+        # check if entry already exists
+        # and if yes, do nothing
+        if self._dms.find(db.LogEntry,
+                          db.LogEntry.timestamp == self.updated,
+                          db.LogEntry.file_id == self._record.id
+                          ).one():
+            return
+
+        logentry = db.LogEntry()
+        logentry.timestamp = self.updated
+        logentry.first_name = self.owner['first_name']
+        logentry.last_name = self.owner['last_name']
+        logentry.username = self.owner['username']
+        logentry.email = self.owner['email']
+        logentry.file = self._record
+        if self.deleted:
+            verb = u'deleted'
+        elif self._new:
+            verb = u'created'
+        else:
+            verb = u'edited'
+        logentry.action = verb
+        logentry.action_type = u'file'
+
+        self._dms.add(logentry)
+
     def _send_notification(self):
         if self.deleted:
-            verb = 'deleted'
+            verb = u'deleted'
         elif self._new:
-            verb = 'created'
+            verb = u'created'
         else:
-            verb = 'edited'
+            verb = u'edited'
 
         self._hub.queue.put_into_notification_list(self.name,
                                                    self.fullpath,
@@ -358,7 +411,7 @@ class DropletUpdate(WorkerAction):
                 self._dms.remove(self._record)
 
                 # notify user
-                self._fire_notification = True
+                self._action_taken = True
                 return
 
             parent = self._get_parent()
@@ -411,7 +464,7 @@ class DropletUpdate(WorkerAction):
         self._record.revision = len(self.revisions)
 
         # notify user
-        self._fire_notification = True
+        self._action_taken = True
 
     def _get_patch(self):
         uri = '%(server)s/api/droplet/%(droplet_id)s/revision/latest/patch/' %\
@@ -453,7 +506,7 @@ class DropletUpdate(WorkerAction):
         self._record.modified = self.updated
 
         # notify user
-        self._fire_notification = True
+        self._action_taken = True
 
     def _failure(self, result):
         if __debug__:
