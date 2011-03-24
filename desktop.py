@@ -7,6 +7,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 import gtk.glade
+import webkit
 
 import util
 import dbschema as db
@@ -112,7 +113,7 @@ class DesktopTray:
                     image.set_from_stock(gtk.STOCK_FILE, gtk.ICON_SIZE_MENU)
                 menu_item.set_image(image)
 
-                menu_item.set_label(f.filename)
+                menu_item.set_label(basename(f.filename))
                 # disconnect item first
                 try:
                     menu_item.disconnect(self._connected_handler_ids[i])
@@ -203,6 +204,24 @@ class DesktopTray:
         self.gladefile["preferences"].get_widget("password_entry").set_text(password)
         self.gladefile["preferences"].get_widget("host_entry").set_text(host)
 
+    def more_updates(self, widget):
+        self.gladefile["recent-updates"] = gtk.glade.XML("glade/recent-updates.glade")
+        window = self.gladefile["recent-updates"].get_widget("recent-updates")
+
+        # set icon
+        window.set_icon_from_file("./images/icon-ok.svg")
+
+        # create browser
+        scrolled_window = self.gladefile["recent-updates"].get_widget("scrolledwindow1")
+        webview = webkit.WebView()
+        scrolled_window.add(webview)
+        webview.open("file://glade/recent-updates.html")
+
+        button_close = self.gladefile["recent-updates"].get_widget("close")
+        button_close.connect_object("clicked", gtk.Widget.destroy, window)
+
+        window.show_all()
+
     def preferences(self, widget):
         self.gladefile["preferences"] = gtk.glade.XML("glade/preferences.glade")
         window = self.gladefile["preferences"].get_widget("preferences")
@@ -218,17 +237,7 @@ class DesktopTray:
 
         self.load_preferences()
 
-        window.show()
-
-    def more_updates(self, widget):
-        self.gladefile["more-updates"] = gtk.glade.XML("glade/more-updates.glade")
-        window = self.gladefile["more-updates"].get_widget("more-updates")
-
-        button_cancel = self.gladefile["more-updates"].get_widget("close-button")
-        button_cancel.connect_object("clicked", gtk.Widget.destroy, window)
-
-        window.show()
-
+        window.show_all()
 
     def register(self, widget):
         self.gladefile["register"] = gtk.glade.XML("glade/register.glade")
@@ -240,7 +249,7 @@ class DesktopTray:
         button_yes = self.gladefile["register"].get_widget("apply")
         button_yes.connect_object("clicked", self.register_cb, window)
 
-        window.show()
+        window.show_all()
 
     def register_cb(self, widget):
         username = unicode(self.gladefile["register"].
@@ -265,7 +274,6 @@ class DesktopTray:
         self.gladefile["preferences"].get_widget("host_entry").set_text(host)
 
         widget.window.destroy()
-
 
     def popup_menu_cb(self, widget, button, time, data = None):
         if button == 3:
