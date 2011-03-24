@@ -40,6 +40,7 @@ class DatabaseManager():
         self.store.execute(SCHEMA_FILE)
         self.store.execute(SCHEMA_WATCHPATH)
         self.store.execute(SCHEMA_CONFIG)
+        self.store.execute(SCHEMA_LOG)
 
         version = Config()
         version.name = u'version'

@@ -21,6 +21,17 @@ SCHEMA_CONFIG = '''CREATE TABLE config (name TEXT PRIMARY KEY,
                                         value TEXT
                                         );'''
 
+SCHEMA_LOG = '''CREATE TABLE log (id INTEGER PRIMARY KEY,
+                                  timestamp DATETIME,
+                                  first_name TEXT,
+                                  last_name TEXT,
+                                  username TEXT,
+                                  email TEXT,
+                                  action TEXT,
+                                  action_type TEXT,
+                                  file_id TEXT
+                                  );'''
+
 SCHEMA_VERSION = 1
 
 class File(object):
@@ -50,5 +61,18 @@ class Config(object):
 
     def __repr__(self):
         return self.value
+
+class LogEntry(object):
+    __storm_table__ = "log"
+    id = Int(primary=True)
+    timestamp = DateTime()
+    first_name = Unicode()
+    last_name = Unicode()
+    username = Unicode()
+    email = Unicode()
+    action = Unicode()
+    action_type = Unicode()
+    file_id = Unicode()
+    file = Reference(file_id, File.id)
 
 File.watchpath = Reference(File.watchpath_id, WatchPath.id)
