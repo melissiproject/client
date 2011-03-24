@@ -42,7 +42,7 @@ class Worker():
         # only if the item is not in the queue again
         if item not in self._hub.queue:
             self.processing = True
-            self._hub.desktop_tray.set_icon_update("Melisi Working")
+            self._hub.desktop_tray.set_icon_update("Bbzzzz...")
             self.process_item(item)
 
     def process_item(self, item):
