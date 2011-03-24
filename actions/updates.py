@@ -11,7 +11,10 @@ class GetUpdates(WorkerAction):
 
     @property
     def _uri(self):
-        return '%s/api/status/' % self._hub.config_manager.get_server()
+        return '%s/api/status/after/%s/' % (self._hub.config_manager.get_server(),
+                                           self._hub.config_manager.get_timestamp()
+                                           )
+
 
     def _add_to_queue(self, item, when=0):
         reactor.callLater(when, self._hub.queue.put, item)
@@ -39,8 +42,9 @@ class GetUpdates(WorkerAction):
                 CellUpdate(hub=self._hub, **cell)
                 )
 
-        # todo
+
         # update timestamp
+        self._hub.config_manager.set_timestamp(result['timestamp'])
 
         # recall self
         self._add_to_queue(GetUpdates(hub=self._hub), when=10)
