@@ -1,16 +1,20 @@
 from twisted.internet import gtk2reactor
 gtk2reactor.install()
 from twisted.internet import reactor
-
+import hashlib
+import tempfile
+import os
 from os.path import basename, join as pathjoin
 import pygtk
 pygtk.require('2.0')
 import gtk
 import gtk.glade
 import webkit
+from datetime import datetime, timedelta
 
 import util
 import dbschema as db
+import recent_updates_template
 
 class DesktopTray:
     def __init__(self, hub, disable=False):
@@ -96,34 +100,35 @@ class DesktopTray:
 
     def set_recent_updates(self):
         i = 0
-        for f in self.hub.database_manager.store.find(db.File).order_by(db.Desc(db.File.modified))[:10]:
-            if f.filename:
-                try:
-                    menu_item = self.items['recent-updates-list'][i]
-                except IndexError:
-                    menu_item = gtk.ImageMenuItem()
-                    self.items['recent-updates-menu'].append(menu_item)
-                    self.items['recent-updates-list'].append(menu_item)
+        q = self.hub.database_manager.store.find(db.File,
+                                                 db.File.filename != u'')
+        for f in q.order_by(db.Desc(db.File.modified))[:10]:
+            try:
+                menu_item = self.items['recent-updates-list'][i]
+            except IndexError:
+                menu_item = gtk.ImageMenuItem()
+                self.items['recent-updates-menu'].append(menu_item)
+                self.items['recent-updates-list'].append(menu_item)
 
-                # set menu image
-                image = gtk.Image()
-                if f.directory:
-                    image.set_from_stock(gtk.STOCK_DIRECTORY, gtk.ICON_SIZE_MENU)
-                else:
-                    image.set_from_stock(gtk.STOCK_FILE, gtk.ICON_SIZE_MENU)
-                menu_item.set_image(image)
+            # set menu image
+            image = gtk.Image()
+            if f.directory:
+                image.set_from_stock(gtk.STOCK_DIRECTORY, gtk.ICON_SIZE_MENU)
+            else:
+                image.set_from_stock(gtk.STOCK_FILE, gtk.ICON_SIZE_MENU)
+            menu_item.set_image(image)
 
-                menu_item.set_label(basename(f.filename))
-                # disconnect item first
-                try:
-                    menu_item.disconnect(self._connected_handler_ids[i])
-                except KeyError:
-                    # no worries, the item was just created
-                    pass
+            menu_item.set_label(basename(f.filename))
+            # disconnect item first
+            try:
+                menu_item.disconnect(self._connected_handler_ids[i])
+            except KeyError:
+                # no worries, the item was just created
+                pass
 
-                self._connected_handler_ids[i] = menu_item.connect('activate', self.open_folder, f.filename)
-                ## menu_item.set_visible(True)
-                i += 1
+            self._connected_handler_ids[i] = menu_item.connect('activate', self.open_folder, f.filename)
+            ## menu_item.set_visible(True)
+            i += 1
 
         # remove extra entries if we move from more updates to less
         for k in range(i, len(self.items['recent-updates-list'])):
@@ -204,6 +209,55 @@ class DesktopTray:
         self.gladefile["preferences"].get_widget("password_entry").set_text(password)
         self.gladefile["preferences"].get_widget("host_entry").set_text(host)
 
+    def _create_more_updates_page(self, filename=None):
+        # create page
+        todaysentries = ""
+        yesterdaysentries = ""
+        olderentries = ""
+
+        today = datetime.today()
+        yesterday = datetime.today() - timedelta(days=1)
+        q = self.hub.database_manager.store.find(db.LogEntry,
+                                                 db.File.filename != u'',
+                                                 db.File.id == db.LogEntry.file_id)
+
+        for e in q.order_by(db.Desc(db.LogEntry.timestamp), db.Desc(db.LogEntry.id))[:10]:
+            entry = recent_updates_template.ENTRY % {'emailhash': hashlib.md5(e.email).hexdigest(),
+                                                     'first_name': e.first_name,
+                                                     'last_name': e.last_name,
+                                                     'verb': e.action,
+                                                     'action_type': e.action_type,
+                                                     'fileurl':pathjoin(e.file.watchpath.path, e.file.filename),
+                                                     'name':basename(e.file.filename),
+                                                     'time':util.timesince(e.timestamp),
+                                                      }
+
+            if e.timestamp.day == today.day and \
+               e.timestamp.month == today.month and \
+               e.timestamp.year == today.year:
+                todaysentries += entry
+
+            elif e.timestamp.day == yesterday.day and \
+                 e.timestamp.month == yesterday.month and \
+                 e.timestamp.year == yesterday.year:
+                yesterdaysentries += entry
+
+            else:
+                olderentries += entry
+
+        if filename:
+            f = open(filename, 'w')
+        else:
+            f = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
+
+        f.write(recent_updates_template.MAIN % {'todaysentries': todaysentries,
+                                                'yesterdaysentries': yesterdaysentries,
+                                                'olderentries':olderentries
+                                                })
+        f.close()
+
+        return f.name
+
     def more_updates(self, widget):
         self.gladefile["recent-updates"] = gtk.glade.XML("glade/recent-updates.glade")
         window = self.gladefile["recent-updates"].get_widget("recent-updates")
@@ -215,10 +269,32 @@ class DesktopTray:
         scrolled_window = self.gladefile["recent-updates"].get_widget("scrolledwindow1")
         webview = webkit.WebView()
         scrolled_window.add(webview)
-        webview.open("file://glade/recent-updates.html")
 
+        # create page
+        more_updates_filename = self._create_more_updates_page()
+
+        # open page
+        webview.open("file://%s" % more_updates_filename)
+
+        # connect close button
+        def _close_window(window, file):
+            """ close "more updates" window and delete temporary file """
+            try:
+                os.unlink(file)
+            except OSError, error_message:
+                # ignore
+                pass
+            window.destroy()
         button_close = self.gladefile["recent-updates"].get_widget("close")
-        button_close.connect_object("clicked", gtk.Widget.destroy, window)
+        button_close.connect_object("clicked", _close_window, window, more_updates_filename)
+
+        # connect refresh button
+        def _refresh_more_updates(webview, more_updates_filename):
+            self._create_more_updates_page(more_updates_filename)
+            webview.reload()
+
+        button_refresh = self.gladefile["recent-updates"].get_widget("refresh")
+        button_refresh.connect_object("clicked", _refresh_more_updates, webview, more_updates_filename)
 
         window.show_all()
 
