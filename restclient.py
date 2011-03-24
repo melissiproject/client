@@ -161,7 +161,7 @@ class RestClient():
                 twisted.internet.error.TimeoutError), error:
 
             self.disconnect()
-            self.hub.desktop_tray.set_icon_offline("Connection error: Check your internet connection status")
+            self.hub.desktop_tray.set_icon_offline("Connection failed")
             # reactor.callLater(2, self.connect)
 
         except twisted.web.error.Error, error:
