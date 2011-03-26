@@ -499,8 +499,8 @@ class DropletUpdate(WorkerAction):
             current_mode = os.stat(self.fullpath).st_mode
             os.chmod(self.fullpath, current_mode|256|128)
 
-        # move file
-        shutil.move(result.name, self.fullpath)
+        # copy file
+        shutil.copyfile(result.name, self.fullpath)
 
         # update time
         self._touch_file_datetime()

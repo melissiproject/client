@@ -14,12 +14,8 @@ class StringReceiver(protocol.Protocol):
     def __init__(self, deferred=None):
         self._deferred = deferred
         self.code = 0
-        # self.buffer = tempfile.SpooledTemporaryFile(prefix='melisi-',
-        #                                             suffix='.tmp')
-
         self.buffer = tempfile.NamedTemporaryFile(prefix='melisi-',
                                                   suffix='.tmp')
-
 
     def dataReceived(self, data):
         """ Receives data. We don't expect a lot of data here
@@ -34,3 +30,5 @@ class StringReceiver(protocol.Protocol):
             self._deferred.callback(self.buffer)
         else:
             self._deferred.errback(self.buffer)
+
+        self.buffer.close()
