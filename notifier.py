@@ -50,7 +50,13 @@ class HandleEvents(pyinotify.ProcessEvent):
     def process_IN_CREATE(self, event):
         # we *do* have to do that although we use rec=True
         if event.dir:
-            path = unicode(event.pathname)
+            try:
+                path = unicode(event.pathname)
+            except UnicodeDecodeError, error_message:
+                if __debug__:
+                    dprint("Ignore file: ", error_message)
+                return
+
             f, w = self.manager.path_split(path)
             self.manager.add_to_queue(CreateDir(self.manager.hub, f, w),
                                       pathjoin(w,f)
@@ -70,7 +76,14 @@ class HandleEvents(pyinotify.ProcessEvent):
         if self.checkFile(event):
             # remove from dictionary
             self.manager.remove_from_file_list(event)
-            path = unicode(event.pathname)
+
+            try:
+                path = unicode(event.pathname)
+            except UnicodeDecodeError, error_message:
+                if __debug__:
+                    dprint("Ignore file: ", error_message)
+                return
+
             f, w = self.manager.path_split(path)
             self.manager.add_to_queue(ModifyFile(self.manager.hub, f, w),
                                       pathjoin(w,f)
@@ -78,7 +91,13 @@ class HandleEvents(pyinotify.ProcessEvent):
 
     def process_IN_DELETE(self, event):
         # TODO when delete dir what happens with the files?
-        path = unicode(event.pathname)
+        try:
+            path = unicode(event.pathname)
+        except UnicodeDecodeError, error_message:
+            if __debug__:
+                dprint("Ignore file: ", error_message)
+            return
+
         f, w = self.manager.path_split(path)
         if event.dir:
             self.manager.add_to_queue(DeleteDir(self.manager.hub, f, w),
@@ -90,10 +109,22 @@ class HandleEvents(pyinotify.ProcessEvent):
                                       )
 
     def process_IN_MOVED_TO(self, event):
-        path = unicode(event.pathname)
+        try:
+            path = unicode(event.pathname)
+        except UnicodeDecodeError, error_message:
+            if __debug__:
+                dprint("Ignore file: ", error_message)
+            return
+
         filename, watched_dir = self.manager.path_split(path)
         try:
-            src_path = unicode(event.src_pathname)
+            try:
+                src_path = unicode(event.src_pathname)
+            except UnicodeDecodeError, error_message:
+                if __debug__:
+                    dprint("Ignore file: ", error_message)
+                return
+
             old_filename, _ = self.manager.path_split(src_path)
         except AttributeError, error_message:
             # if we receive error """'Event' object has no attribute 'src_pathname'"""
@@ -174,7 +205,7 @@ class NotifyManager():
     def path_split(self, path):
         for d in self.watch_list:
             if path.startswith(d):
-                return (unicode(path[len(d)+1:]), d)
+                return (path[len(d)+1:], d)
 
         raise KeyError, "We don't follow '%s' (%s)" % (path, self.watch_list)
 
