@@ -12,6 +12,10 @@ class ModifyFile(WorkerAction):
         self.watchpath = watchpath
 
     @property
+    def unique_id(self):
+        return self.filename
+
+    @property
     def fullpath(self):
         return pathjoin(self.watchpath, self.filename)
 
