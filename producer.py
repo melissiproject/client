@@ -131,15 +131,14 @@ class MultiPartProducer():
                 chunk += str(self._file.read(self.CHUNK_SIZE - len(chunk)))
 
             if len(chunk) < self.CHUNK_SIZE:
-                chunk += str(self.tail[:self.CHUNK_SIZE - len(chunk)])
-                self.tail = self.tail[len(chunk):]
+                c = str(self.tail[:self.CHUNK_SIZE - len(chunk)])
+                chunk += c
+                self.tail = self.tail[len(c):]
 
             if len(chunk) == 0:
                 done = True
-            else:
-                self._send_to_consumer(chunk)
 
-
+            self._send_to_consumer(chunk)
 
         if done:
             self._finish()
