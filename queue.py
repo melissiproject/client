@@ -1,6 +1,7 @@
 if __debug__:
     from twisted.internet import reactor
     from Print import dprint
+
 class Queue(object):
     """ Simple Queue Service.
 
@@ -36,7 +37,6 @@ class Queue(object):
             return False
 
     def put_into_waiting_list(self, waiting_id, item):
-        print waiting_id
         try:
             self.waiting_list[waiting_id].append(item)
         except KeyError:
@@ -45,7 +45,8 @@ class Queue(object):
     def wake_up(self, waiting_id):
         if waiting_id in self.waiting_list:
             for item in self.waiting_list[waiting_id]:
-                print "Waking up ", item
+                if __debug__:
+                    dprint("Waking up %s" % item)
                 self.put(item)
 
             del(self.waiting_list[waiting_id])
