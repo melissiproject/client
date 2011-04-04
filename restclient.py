@@ -56,10 +56,9 @@ class RestClient():
         data = {'username':username,
                 'password':password,
                 'email':email}
-        data = json.dumps(data)
         uri = '%s/user' % self.hub.config_manager.get_server()
 
-        return self.post(uri, data)
+        return self._sendRequest('GET', uri, data)
 
     def get(self, uri, data=None, file_handle=None):
         return self._sendRequest('GET', uri, data, file_handle=None)
