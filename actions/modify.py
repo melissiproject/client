@@ -44,7 +44,8 @@ class ModifyFile(WorkerAction):
         if not parent:
             # sadly we cannot use WaitItem because we don't know
             # cellid yet
-            raise RetryLater
+            raise RetryLater("Parent does not exist in db [%s]" % \
+                             os.path.dirname(self.filename))
         else:
             return parent
 
@@ -70,7 +71,7 @@ class ModifyFile(WorkerAction):
             try:
                 self._file_handler = open(self.fullpath)
             except (OSError, IOError) as error_message:
-                raise RetryLater()
+                raise RetryLater("Error opening file")
 
             if not self._record.id:
                 return self._post_droplet()
@@ -117,7 +118,7 @@ class ModifyFile(WorkerAction):
     def _failure_callback(self, error):
         if __debug__:
             dprint("Failure in modify ", error)
-        raise RetryLater
+        raise RetryLater("Failure in modify")
 
 class CreateDir(WorkerAction):
     def __init__(self, hub, filename, watchpath):
@@ -141,7 +142,8 @@ class CreateDir(WorkerAction):
                                        WatchPath__path=self.watchpath
                                        )
         if not parent:
-            raise RetryLater
+            raise RetryLater("Parent does not exist in db [%s]" % \
+                             os.path.dirname(self.filename))
         else:
             return parent
 
@@ -175,6 +177,7 @@ class CreateDir(WorkerAction):
         data = {'name': os.path.basename(self.filename),
                 'parent':self._parent.id
                 }
+        print data
         d = self._hub.rest_client.post(str(uri), data=data)
         d.addCallback(self._success)
         d.addErrback(self._failure)
@@ -190,4 +193,4 @@ class CreateDir(WorkerAction):
         if __debug__:
             dprint("Cell create failed", error)
 
-        raise RetryLater
+        raise RetryLater("Cell create failed [%s]" % self.unique_id)
