@@ -117,7 +117,7 @@ class WorkerAction(object):
             self._send_notification()
 
     def _fetch_file_record(self, **kwargs):
-        # keys is the format
+        # keys format:
         # File__filename is converted to db.File.filename
         query = self._dms.find(db.File)
         query = query.find(db.WatchPath.id == db.File.watchpath_id)
