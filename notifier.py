@@ -54,7 +54,9 @@ class HandleEvents(pyinotify.ProcessEvent):
                 path = unicode(event.pathname)
             except UnicodeDecodeError, error_message:
                 if __debug__:
-                    dprint("Ignore file: ", error_message)
+                    dprint("Ignore file [%s]: " % (event.pathname,
+                                                   error_message)
+                           )
                 return
 
             f, w = self.manager.path_split(path)
@@ -81,7 +83,9 @@ class HandleEvents(pyinotify.ProcessEvent):
                 path = unicode(event.pathname)
             except UnicodeDecodeError, error_message:
                 if __debug__:
-                    dprint("Ignore file: ", error_message)
+                    dprint("Ignore file [%s]: " % (event.pathname,
+                                                   error_message)
+                           )
                 return
 
             f, w = self.manager.path_split(path)
@@ -95,7 +99,9 @@ class HandleEvents(pyinotify.ProcessEvent):
             path = unicode(event.pathname)
         except UnicodeDecodeError, error_message:
             if __debug__:
-                dprint("Ignore file: ", error_message)
+                dprint("Ignore file [%s]: " % (event.pathname,
+                                               error_message)
+                       )
             return
 
         f, w = self.manager.path_split(path)
@@ -113,7 +119,9 @@ class HandleEvents(pyinotify.ProcessEvent):
             path = unicode(event.pathname)
         except UnicodeDecodeError, error_message:
             if __debug__:
-                dprint("Ignore file: ", error_message)
+                dprint("Ignore file [%s]: " % (event.pathname,
+                                               error_message)
+                       )
             return
 
         filename, watched_dir = self.manager.path_split(path)
@@ -122,7 +130,9 @@ class HandleEvents(pyinotify.ProcessEvent):
                 src_path = unicode(event.src_pathname)
             except UnicodeDecodeError, error_message:
                 if __debug__:
-                    dprint("Ignore file: ", error_message)
+                    dprint("Ignore file [%s]: " % (event.src_pathname,
+                                                   error_message)
+                           )
                 return
 
             old_filename, _ = self.manager.path_split(src_path)
