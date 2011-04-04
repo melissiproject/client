@@ -56,7 +56,8 @@ class Worker():
 
     def _action_failure(self, failure, item):
         # rollback database
-        print "rolling back", item
+        if __debug__:
+            dprint("rolling back [%s]" % item)
         self._hub.database_manager.rollback()
 
         try:
