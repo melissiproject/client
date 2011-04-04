@@ -199,7 +199,7 @@ class DesktopTray:
         self.hub.config_manager.set_username(username)
         self.hub.config_manager.set_password(password)
         self.hub.config_manager.set_server(host)
-        self.hub.rest_client.auth()
+        self.hub.rest_client.connect()
 
         widget.window.destroy()
 
