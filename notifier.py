@@ -54,8 +54,8 @@ class HandleEvents(pyinotify.ProcessEvent):
                 path = unicode(event.pathname)
             except UnicodeDecodeError, error_message:
                 if __debug__:
-                    dprint("Ignore file [%s]: " % (event.pathname,
-                                                   error_message)
+                    dprint("Ignore file [%s]: %s" % (event.pathname,
+                                                     error_message)
                            )
                 return
 
@@ -83,8 +83,8 @@ class HandleEvents(pyinotify.ProcessEvent):
                 path = unicode(event.pathname)
             except UnicodeDecodeError, error_message:
                 if __debug__:
-                    dprint("Ignore file [%s]: " % (event.pathname,
-                                                   error_message)
+                    dprint("Ignore file [%s]: %s" % (event.pathname,
+                                                     error_message)
                            )
                 return
 
@@ -99,8 +99,8 @@ class HandleEvents(pyinotify.ProcessEvent):
             path = unicode(event.pathname)
         except UnicodeDecodeError, error_message:
             if __debug__:
-                dprint("Ignore file [%s]: " % (event.pathname,
-                                               error_message)
+                dprint("Ignore file [%s]: %s" % (event.pathname,
+                                                 error_message)
                        )
             return
 
@@ -119,8 +119,8 @@ class HandleEvents(pyinotify.ProcessEvent):
             path = unicode(event.pathname)
         except UnicodeDecodeError, error_message:
             if __debug__:
-                dprint("Ignore file [%s]: " % (event.pathname,
-                                               error_message)
+                dprint("Ignore file [%s]: %s" % (event.pathname,
+                                                 error_message)
                        )
             return
 
@@ -130,8 +130,8 @@ class HandleEvents(pyinotify.ProcessEvent):
                 src_path = unicode(event.src_pathname)
             except UnicodeDecodeError, error_message:
                 if __debug__:
-                    dprint("Ignore file [%s]: " % (event.src_pathname,
-                                                   error_message)
+                    dprint("Ignore file [%s]: %s" % (event.src_pathname,
+                                                     error_message)
                            )
                 return
 
