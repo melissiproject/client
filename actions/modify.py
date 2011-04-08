@@ -138,9 +138,9 @@ class CreateDir(WorkerAction):
                                        )
 
     def _get_parent(self):
-        return self._fetch_file_record(File__filename=os.path.dirname(self.filename),
-                                       WatchPath__path=self.watchpath
-                                       )
+        parent = self._fetch_file_record(File__filename=os.path.dirname(self.filename),
+                                         WatchPath__path=self.watchpath
+                                         )
         if not parent:
             raise RetryLater("Parent does not exist in db [%s]" % \
                              os.path.dirname(self.filename))
@@ -177,7 +177,7 @@ class CreateDir(WorkerAction):
         data = {'name': os.path.basename(self.filename),
                 'parent':self._parent.id
                 }
-        print data
+
         d = self._hub.rest_client.post(str(uri), data=data)
         d.addCallback(self._success)
         d.addErrback(self._failure)
