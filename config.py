@@ -68,6 +68,11 @@ class ConfigManager:
         return self.config.get('main', 'host')
 
     def set_server(self, host):
+        # error checking
+        import re
+        if not re.match(r'http(s)?://[^:/]+:\d+', host):
+            return -1
+
         self.config.set('main', 'host', str(host))
         self.write_config()
 
