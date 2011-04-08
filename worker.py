@@ -70,12 +70,12 @@ class Worker():
 
         except RetryLater, e:
             if __debug__:
-                dprint("Need to retry later")
+                dprint("RetryLater ", e)
             reactor.callLater(e.time, self._hub.queue.put, item)
 
         except DropItem, e:
             if __debug__:
-                dprint("Drop item")
+                dprint("DropItem ", e)
             pass
 
         except Exception, e:
