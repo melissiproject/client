@@ -56,9 +56,8 @@ class RestClient():
         data = {'username':username,
                 'password':password,
                 'email':email}
-        uri = '%s/user' % self.hub.config_manager.get_server()
-
-        return self._sendRequest('GET', uri, data)
+        uri = '%s/api/user/' % self.hub.config_manager.get_server()
+        return self._sendRequest('POST', uri, data, auth=False)
 
     def get(self, uri, data=None, file_handle=None):
         return self._sendRequest('GET', uri, data, file_handle=None)
@@ -72,7 +71,7 @@ class RestClient():
     def delete(self, uri):
         return self._sendRequest('DELETE', uri)
 
-    def _sendRequest(self, method, uri, data=None, file_handle=None):
+    def _sendRequest(self, method, uri, data=None, file_handle=None, auth=True):
         # code from http://marianoiglesias.com.ar/python/file-\
         # uploading-with-multi-part-encoding-using-twisted/
         def finished(bytes):
@@ -97,7 +96,7 @@ class RestClient():
             print "responseFail failure", result.type
             if __debug__:
                 dprint(result, exception=1)
-            # data.trap()
+
             return result
 
         # receiver
@@ -112,7 +111,8 @@ class RestClient():
 
         myReceiver = receiver.StringReceiver(receiverDeferred)
         headers = http_headers.Headers()
-        headers.addRawHeader('Authorization', self._get_basic_auth_string())
+        if auth:
+            headers.addRawHeader('Authorization', self._get_basic_auth_string())
 
         if data or file_handle:
             myProducer = producer.MultiPartProducer(data,
