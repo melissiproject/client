@@ -35,8 +35,12 @@ class RetryLater(Exception):
     value: 10)
 
     """
-    def __init__(self, time=10):
+    def __init__(self, error_message=None, time=10):
         self.time = time
+        self.error_message = error_message
+
+    def __str__(self):
+        return str(self.error_message)
 
 class DropItem(Exception):
     """
@@ -158,3 +162,4 @@ from updates import *
 from delete import *
 from move import *
 from notify import *
+from share import *
