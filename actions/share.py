@@ -1,60 +1,48 @@
-import json
-from twisted.internet import reactor
-
-import util
-import dbschema as db
-
+# Contains
+# Share
+from actions import *
 if __debug__:
     from Print import dprint
-    
-def share(hub, item):
-    _dms = hub.database_manager.store
-    function, parameters = item
-    folder, mode, users = parameters
-    filename, watched_path = hub.notify_manager.path_split(folder)
 
-    record = _dms.find(db.File,
-                       db.File.filename == filename,
-                       db.WatchPath.path == watched_path,
-                       db.WatchPath.id == db.File.watchpath_id, 
-                       db.File.directory == True
-                       ).one() or False
-    if record:
-        def success_cb(result):
-            reactor.callLater(util.WORKER_RECALL, hub.worker.work)
+class Share(WorkerAction):
+    def __init__(self, hub, filename, watchpath, mode, user):
+        super(Share, self).__init__(hub)
 
-        def failure_cb(error):
-            if __debug__:
-                dprint("Error setting share: ", error)
-            reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-            return
+        self.filename = filename
+        self.watchpath = watchpath
+        self.mode = mode
+        self.user = user
 
-        try:
-            if mode not in [1,2,3,4]:
-                raise ValueError("Invalid mode: '%s'" % mode)
-            if not isinstance(users, list):
-                raise ValueError("Invalid list: '%s'" % list)
-            for user in users:
-                if not isinstance(user, unicode) and not isinstance(user, int):
-                    raise ValueError("Invalid user '%s'" % user)
-        except ValueError, error_message:
-            if __debug__:
-                dprint(error_message, exception=1)
-            reactor.callLater(util.WORKER_RECALL, hub.worker.work)
-            return
-        
-        data = {'mode': mode,
-                'users': ','.join(users)
+    @property
+    def unique_id(self):
+        return self.filename
+
+    def _exists(self):
+        # return record if item exists in the database else return
+        # False
+        return self._fetch_file_record(File__filename=self.filename,
+                                       File__directory=True
+                                       )
+
+    def _execute(self):
+        self._record = self._exists()
+        if not self._record:
+            # we don't follow the file, thus we cannot share it
+            raise DropItem("You cannot share a folder I don't follow")
+
+        data = {'mode': self.mode,
+                'user': self.user
                 }
-        uri = '%s/share/%s' % (hub.config_manager.get_server(),
-                               record.server_id)
-        uri += util.urlencode(data)
-        d = hub.rest_client.post(uri, json.dumps(data))
-        d.addCallback(success_cb)
-        d.addErrback(failure_cb)
-    else:
-        # we don't follow that file, to nothing
+        uri = '%s/api/cell/%s/share/' % (self._hub.config_manager.get_server(),
+                                         self._record.id)
+        # uri = '%s/api/cell/%s/share/' % ("http://localhost:8888",
+        #                         self._record.id)
+
+        d = self._hub.rest_client.post(str(uri), data=data)
+        d.addErrback(self._failure)
+
+    def _failure(self, error):
         if __debug__:
-            dprint("Error: we cannot share a folder that we don't watch",
-                   filename,
-                   watched_path)
+            dprint("Error setting share: ", error)
+
+        return DropItem("Failed to set share")
