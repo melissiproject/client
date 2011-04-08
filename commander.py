@@ -4,77 +4,127 @@ import twisted.internet.defer  as defer
 import json
 
 import dbschema as db
+from actions import NotImplementedError, Share
 
-def share(hub, data):
-    folder = data["folder"]
-    mode = data["mode"]
-    users = data["users"]
 
-    # add to queue
-    hub.worker.queue.put(('SHARE', (folder, mode,users)))
+class CommanderAction(object):
+    def __init__(self, hub, command):
+        self._hub = hub
+        self._command = command
 
-def auth(hub, data):
-    username = data["username"]
-    password = data["password"]
+    def __call__(self):
+        raise NotImplementedError
 
-    hub.config_manager.set_username(username)
-    hub.config_manager.set_password(password)
-    hub.rest_client.disconnect()
-    hub.rest_client.auth()
+class CommanderShare(CommanderAction):
+    def __init__(self, hub, command, path, mode, user):
+        super(CommanderShare, self).__init__(hub, command)
+        self.path = path
+        self.mode = mode
+        self.user = user
 
-def disconnect(hub, data):
-    hub.rest_client.disconnect()
+    def __call__(self):
+        # validate and build a Share WorkerAction object
+        filename, watched_dir = self._hub.notify_manager.path_split(self.path)
+        self._hub.queue.put(Share(self._hub, filename, watched_dir, self.mode, self.user))
 
-def connect(hub, data):
-    hub.rest_client.auth()
+class CommanderAuth(CommanderAction):
+    def __init__(self, hub, command, username, password):
+        super(CommanderAuth, self).__init__(hub, command)
+        self.username = username
+        self.password = password
 
-def check_busy(hub, data):
-    return hub.worker.processing
+    def __call__(self):
+        self._hub.config_manager.set_username(self.username)
+        self._hub.config_manager.set_password(self.password)
+        self._hub.config_manager.write_config()
+        self._hub.rest_client.disconnect()
+        self._hub.rest_client.connect()
 
-def register(hub, data):
-    return hub.rest_client.register(data['username'],
-                                    data['email'],
-                                    data['password'])
+class CommanderDisconnect(CommanderAction):
+    def __init__(self, hub, command):
+        super(CommanderDisconnect, self).__init__(hub, command)
 
-def deleteuser(hub, data):
-    def success_cb(result):
-        hub.rest_client.disconnect()
+    def __call__(self):
+        self._hub.rest_client.disconnect()
 
-        hub.config_manager.set_username('')
-        hub.config_manager.set_password('')
+class CommanderConnect(CommanderAction):
+    def __init__(self, hub, command):
+        super(CommanderConnect, self).__init__(hub, command)
 
-        # we should be able to do just a
-        # store.remove(db.File)
-        try:
-            for entry in hub.database_manager.store.find(db.File):
-                hub.database_manager.store.remove(entry)
-            for entry in hub.database_manager.store.find(db.WatchPath):
-                hub.database_manager.store.remove(entry)
-            hub.database_manager.store.commit()
-        except:
-            raise    
-                
+    def __call__(self):
+        self._hub.rest_client.connect()
 
-        return "User deleted"
+class CommanderCheckBusy(CommanderAction):
+    def __init__(self, hub, command):
+        super(CommanderCheckBusy, self).__init__(hub, command)
 
-    def failure_cb(error):
-        return "Delete failed with error:", error
-        
-    d = hub.rest_client.delete('%s/user/%s?delete=yes' %
-                               (hub.config_manager.get_server(),
-                                hub.config_manager.get_username())
-                               )
-    d.addCallback(success_cb)
-    d.addErrback(failure_cb)
-    return d
+    def __call__(self):
+        return 'Processing: %s, Queue size: %s queued, %s waiting' % (
+            self._hub.worker.processing,
+            len(self._hub.queue.queue),
+            len(self._hub.queue.waiting_list)
+            )
 
-def sethost(hub, data):
-    host = data["host"]
-    port = data["port"]
+class CommanderRegister(CommanderAction):
+    def __init__(self, hub, command, username, password, email):
+        super(CommanderRegister, self).__init__(hub, command)
+        self.username = username
+        self.password = password
+        self.email = email
 
-    hub.config_manager.set_server(host, port)
-    hub.rest_client.disconnect()
-    hub.rest_client.auth()
+    def __call__(self):
+        return self._hub.rest_client.register(self.username,
+                                              self.password,
+                                              self.email
+                                              )
+
+class CommanderDeleteUser(CommanderAction):
+    def __init__(self, hub, command):
+        super(CommanderDeleteUser, self).__init__(hub, command)
+
+    def __call__(self):
+        def success_cb(result):
+            hub.rest_client.disconnect()
+
+            hub.config_manager.set_username('')
+            hub.config_manager.set_password('')
+
+            # we should be able to do just a
+            # store.remove(db.File)
+            try:
+                for entry in hub.database_manager.store.find(db.File):
+                    hub.database_manager.store.remove(entry)
+                for entry in hub.database_manager.store.find(db.WatchPath):
+                    hub.database_manager.store.remove(entry)
+                hub.database_manager.store.commit()
+            except:
+                raise
+
+
+            return "User deleted"
+
+        def failure_cb(error):
+            return "Delete failed with error:", error
+
+        d = hub.rest_client.delete('%s/user/%s' %
+                                   (hub.config_manager.get_server(),
+                                    hub.config_manager.get_username())
+                                   )
+        d.addCallback(success_cb)
+        d.addErrback(failure_cb)
+
+        return d
+
+class CommanderSetHost(CommanderAction):
+    def __init__(self, hub, command, host):
+        super(CommanderSetHost, self).__init__(hub, command)
+        self.host = host
+
+    def __call__(self):
+        self._hub.config_manager.set_server(self.host)
+        self._hub.rest_client.disconnect()
+        self._hub.rest_client.connect()
+
 
 class FooboxCommandReceiverProtocol(LineReceiver):
     def lineReceived(self, line):
@@ -90,7 +140,7 @@ class FooboxCommandReceiverProtocol(LineReceiver):
             return
 
         try:
-            reply = defer.maybeDeferred(self.factory.commands[cmd], self.factory.hub, data)
+            reply = defer.maybeDeferred(self.factory.commands[cmd](self.factory.hub, **data))
         except KeyError:
             if __debug__:
                 dprint("COMMANDER: Received unknown command")
@@ -106,19 +156,19 @@ class FooboxCommandReceiverProtocol(LineReceiver):
     def closeConnection(self):
         self.transport.doWrite()
         self.transport.loseConnection()
-        
+
 
 class FooboxCommandReceiver(ServerFactory):
     protocol = FooboxCommandReceiverProtocol
 
     def __init__(self, hub):
         self.hub = hub
-        self.commands = {'SHARE':share,
-                         'AUTH':auth,
-                         'DISCONNECT':disconnect,
-                         'CONNECT':connect,
-                         'CHECKBUSY':check_busy,
-                         'REGISTER':register,
-                         'SETHOST':sethost,
-                         'DELETEUSER':deleteuser
+        self.commands = {'SHARE':CommanderShare,
+                         'AUTH':CommanderAuth,
+                         'DISCONNECT':CommanderDisconnect,
+                         'CONNECT':CommanderConnect,
+                         'CHECKBUSY':CommanderCheckBusy,
+                         'REGISTER':CommanderRegister,
+                         'SETHOST':CommanderSetHost,
+                         'DELETEUSER':CommanderDeleteUser,
                          }

@@ -14,7 +14,7 @@ from twisted.internet import reactor
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import ClientFactory
 
-modes = {'woro':1, 'wora': 2, 'wara': 3, 'wnra':4, 'remove':-1}
+modes = ['wara', 'wnra']
 command_list = []
 
 class MelisiCommanderProtocol(LineReceiver):
@@ -42,48 +42,42 @@ class MelisiCommander(ClientFactory):
 def usage(commands):
     print "Available commands: " + ', '.join(commands)
 
-def share(argv):
-    def usage():
-        print "Usage: %s share [folder] [mode] [users]" % sys.argv[0]
+def removeshare(args):
+    pass
 
-    if len(sys.argv) != 5:
+def addshare(args):
+    def usage():
+        print "Usage: %s addshare [folder] [mode] [user]" % sys.argv[0]
+
+    if len(args) != 3:
         usage()
         sys.exit(1)
-
-    folder = argv[0]
-    mode = argv[1]
-    users = argv[2]
-    cmd = {}
-    cmd["command"] = "SHARE"
-
-    cmd["folder"] = os.path.abspath(folder)
 
     # check if proper mode
-    if not (mode in modes.keys()):
+    if not (args[1] in modes):
         usage()
         sys.exit(1)
-    else:
-        cmd["mode"] = modes[mode]
 
-    cmd["users"] = []
-    for user in users.split(','):
-        if user == '':
-            continue
-        cmd["users"].append(user)
+    cmd = {}
+    cmd["command"] = "SHARE"
+    cmd["path"] = os.path.abspath(args[0])
+    cmd["mode"] = args[1]
+    cmd["user"] = args[2]
+
 
     command_list.append(json.dumps(cmd))
 
 
-def auth(argv):
+def auth(args):
     def usage():
         print "Usage: %s auth [username] [password]" % sys.argv[0]
 
-    if len(argv) != 2:
+    if len(args) != 2:
         usage()
         sys.exit(1)
 
-    username = argv[0]
-    password = argv[1]
+    username = args[0]
+    password = args[1]
     cmd = {}
     cmd["command"] = "AUTH"
     cmd["username"] = username
@@ -91,24 +85,24 @@ def auth(argv):
 
     command_list.append(json.dumps(cmd))
 
-def disconnect(argv):
+def disconnect(args):
     cmd = {'command':'DISCONNECT'}
     command_list.append(json.dumps(cmd))
 
-def connect(argv):
+def connect(args):
     cmd = {'command':'CONNECT'}
     command_list.append(json.dumps(cmd))
 
-def register(argv):
+def register(args):
     def usage():
         print "Usage: %s register [username] [password] [email]" % sys.argv[0]
 
-    if len(argv) != 3:
+    if len(args) != 3:
         usage()
         sys.exit()
-    username = argv[0]
-    password = argv[1]
-    email = argv[2]
+    username = args[0]
+    password = args[1]
+    email = args[2]
 
     cmd = {'command':'REGISTER',
            'username':username,
@@ -116,35 +110,28 @@ def register(argv):
            'email':email}
     command_list.append(json.dumps(cmd))
 
-def checkbusy(argv):
+def checkbusy(args):
     cmd = {'command':'CHECKBUSY'}
     command_list.append(json.dumps(cmd))
 
-def sethost(argv):
+def sethost(args):
     def usage():
-        print "Usage: %s sethost [host] [port]" % sys.argv[0]
+        print "Usage: %s sethost http[s]://[host]:[port]/" % sys.argv[0]
 
-    if len(sys.argv) != 4:
+    if len(args) != 1:
         usage()
         sys.exit()
-    host = argv[0]
-    try:
-        port = int(argv[1])
-    except ValueError:
-        usage()
-        sys.exit(1)
 
     cmd = {'command':'SETHOST',
-           'host':host,
-           'port':int(port)}
+           'host':args[0],
+           }
     command_list.append(json.dumps(cmd))
 
-def deleteuser(argv):
+def deleteuser(args):
     def usage():
         print "Usage: %s deleteuser iamsure" % sys.argv[0]
 
-    if len(sys.argv) != 3 and \
-       argv[0] != "iamsure":
+    if len(args) != 1 and args[0] != "iamsure":
         usage()
         sys.exit()
 
@@ -159,15 +146,17 @@ def main():
                       )
     (options, args) = parser.parse_args()
 
-    commands = {'share':share,
-                'auth':auth,
-                'disconnect':disconnect,
-                'connect':connect,
-                'register':register,
-                'checkbusy':checkbusy,
-                'sethost':sethost,
-                'deleteuser':deleteuser
-                }
+    commands = {
+        'auth':auth,
+        'disconnect':disconnect,
+        'connect':connect,
+        'register':register,
+        'checkbusy':checkbusy,
+        'sethost':sethost,
+        'deleteuser':deleteuser,
+        'addshare':addshare,
+        'removeshare':removeshare,
+        }
 
     if len(args) < 1:
         usage(commands)
