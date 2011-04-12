@@ -438,7 +438,8 @@ class DropletUpdate(WorkerAction):
             if self.revisions[-1]['content_md5'] != self._record.hash and \
                len(self.revisions) > self._record.revision:
                 # yeah there is some new content, let's fetch this
-                return self._get_patch()
+                # return self._get_patch()
+                return self._get_file()
 
     def _get_parent(self):
         parent = self._fetch_file_record(File__id=self.cell['pk'])
@@ -482,7 +483,8 @@ class DropletUpdate(WorkerAction):
         return d
 
     def _get_file_success(self, result):
-        # result is a file handle
+        # ok same changes in db
+        self._record.hash = self.revisions[-1]['content_md5']
 
         # check the hash
         if not util.get_hash(f=result) == self._record.hash:

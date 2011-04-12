@@ -61,9 +61,14 @@ class ModifyFile(WorkerAction):
         self._record.hash = self._hash
 
         if self._record.id:
-            patch = True
-            self._file_handler = util.get_delta(self._record.signature,
-                                                self.fullpath)
+            # patch = True
+            # self._file_handler = util.get_delta(self._record.signature,
+            #                                     self.fullpath)
+            # return self._put_revision()
+            try:
+                self._file_handler = open(self.fullpath)
+            except (OSError, IOError) as error_message:
+                raise RetryLater("Erro opening file")
             return self._put_revision()
 
         else:
@@ -96,7 +101,10 @@ class ModifyFile(WorkerAction):
 
     def _put_revision(self):
         uri = '%s/api/droplet/%s/revision/' % (self._hub.config_manager.get_server(), self._record.id)
-        data = {'md5': self._record.hash, 'number': self._record.revision}
+        data = {'md5': self._record.hash,
+                'number': self._record.revision,
+                'patch': False
+                }
         d = self._hub.rest_client.put(str(uri), data=data, file_handle=self._file_handler)
         d.addCallback(self._success_revision_callback)
         d.addErrback(self._failure_callback)
