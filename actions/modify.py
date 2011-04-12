@@ -156,9 +156,6 @@ class CreateDir(WorkerAction):
         record.revision = None
         record.parent_id = self._parent.id
 
-        # add to store
-        self._dms.add(record)
-
         return record
 
     def _execute(self):
@@ -188,6 +185,9 @@ class CreateDir(WorkerAction):
         result = json.load(result)
         self._record.id = result['reply']['pk']
         self._record.modified = util.parse_datetime(result['reply']['created'])
+
+        # add to store
+        self._dms.add(self._record)
 
     def _failure(self, error):
         if __debug__:
