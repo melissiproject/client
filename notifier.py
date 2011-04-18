@@ -35,15 +35,15 @@ class HandleEvents(pyinotify.ProcessEvent):
             #print "Unreadable!", fullpath
             return False
 
-        # check if the file is hidden
-        if event.name[0] == ".":
-            #print "Hidden", fullpath
-            return False
+        # # check if the file is hidden
+        # if event.name[0] == ".":
+        #     #print "Hidden", fullpath
+        #     return False
 
-        # check if the file is a backup
-        if event.name[-1] == "~":
-            #print "Backup", fullpath
-            return False
+        # # check if the file is a backup
+        # if event.name[-1] == "~":
+        #     #print "Backup", fullpath
+        #     return False
 
         return True
 
