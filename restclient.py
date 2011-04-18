@@ -17,6 +17,9 @@ from actions import *
 if __debug__:
     from Print import dprint
 
+class AuthenticationFailed(Exception):
+    pass
+
 class RestClient():
     def __init__(self, hub):
         self.offline = True
@@ -104,7 +107,7 @@ class RestClient():
         # receiver
         receiverDeferred = Deferred()
         receiverDeferred.addCallback(responseDone)
-        receiverDeferred.addErrback(responseFail)
+        # receiverDeferred.addErrback(responseFail)
 
         # producer
         producerDeferred = Deferred()
@@ -138,6 +141,8 @@ class RestClient():
             # lost manually
             if response.code == 204 and response.length == 0:
                 myReceiver.connectionLost(None)
+            elif response.code == 401:
+                raise AuthenticationFailed()
             else:
                 response.deliverBody(myReceiver)
 
@@ -145,11 +150,12 @@ class RestClient():
 
         # we pass receiverDeferred into addErrback so it can call its
         # errback for the error to propagate
-        request.addErrback(self._connection_failure, receiverDeferred)
+        request.addErrback(self._connection_failure)
+        request.addErrback(receiverDeferred.errback)
 
         return receiverDeferred
 
-    def _connection_failure(self, failure, receiver):
+    def _connection_failure(self, failure):
         """ This is a deferred failure """
         try:
             failure.raiseException()
@@ -165,14 +171,13 @@ class RestClient():
             self._hub.desktop_tray.set_icon_offline("Connection failed")
             reactor.callLater(2, self.connect)
 
-        except twisted.web.error.Error, error:
+        except AuthenticationFailed, error:
             # TODO is there a way to directly see the error code
-            if failure.getErrorMessage().startswith("401"):
-                self.disconnect()
-                self._hub.desktop_tray.set_icon_error("Authendication failed: Check your username and password")
-                # TODO pynotify
-                if __debug__:
-                    dprint("Unable to login: Unauthorized message")
+            self.disconnect()
+            self._hub.desktop_tray.set_icon_error("Authendication failed")
+            # TODO pynotify
+            if __debug__:
+                dprint("Unable to login: Unauthorized message")
 
         except twisted.internet.error.SSLError:
             self.disconnect()
@@ -184,7 +189,9 @@ class RestClient():
             print error
 
         finally:
-            # call receiver with failure for the error to propagate
-            # remember that the rest of the callbacks / errbacks are
-            # tailed to "receiver" and not the current chain
-            receiver.errback(failure)
+            return failure
+        # finally:
+        #     # call receiver with failure for the error to propagate
+        #     # remember that the rest of the callbacks / errbacks are
+        #     # tailed to "receiver" and not the current chain
+        #     receiver.errback(failure)
