@@ -6,14 +6,15 @@ from shutil import rmtree
 from actions import *
 
 class GetUpdates(WorkerAction):
-    def __init__(self, hub):
+    def __init__(self, hub, full=False):
         super(GetUpdates, self).__init__(hub)
+        self.timestamp = 0 if full else self._hub.config_manager.get_timestamp()
 
     @property
     def _uri(self):
         return '%s/api/status/after/%s/' % (self._hub.config_manager.get_server(),
-                                           self._hub.config_manager.get_timestamp()
-                                           )
+                                            self.timestamp
+                                            )
 
     def _add_to_queue(self, item, when=0):
         reactor.callLater(when, self._hub.queue.put, item)
