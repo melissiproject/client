@@ -161,7 +161,7 @@ class RestClient():
 
             self.disconnect()
             self.hub.desktop_tray.set_icon_offline("Connection failed")
-            # reactor.callLater(2, self.connect)
+            reactor.callLater(2, self.connect)
 
         except twisted.web.error.Error, error:
             # TODO is there a way to directly see the error code
