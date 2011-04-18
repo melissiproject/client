@@ -169,7 +169,10 @@ class CellUpdate(WorkerAction):
                 # new repository
                 watchpath = db.WatchPath()
                 watchpath.server_id = self.pk
-                watchpath.path = pathjoin(os.path.abspath(u'.'), self.name)
+                watchpath.path = pathjoin(
+                    os.path.abspath(self._hub.config_manager.config.get('main', 'new-root-path')),
+                    self.name
+                    )
                 self._watchpath = watchpath
                 self._dms.add(watchpath)
             else:
