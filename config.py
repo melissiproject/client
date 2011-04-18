@@ -16,13 +16,26 @@ class ConfigManager:
             self.config.add_section('main')
             self.config.set('main', 'username', '')
             self.config.set('main', 'password', '')
-            self.config.set('main', 'host', 'https://localhost:8000')
+            self.config.set('main', 'host', 'http://')
             self.config.set('main', 'database', 'sqlite:///%s/melisi.db' % config_path)
             self.config.set('main', 'socket', '%s/melisi.sock' % config_path)
             self.config.set('main', 'no-desktop', 'False')
             self.config.set('main', 'desktop-notifications', 'True')
+            self.config.set('main', 'new-root-path',
+                            '%s' % os.path.expanduser('~'))
 
             self.write_config()
+
+    @property
+    def configured(self):
+        return self._check_configuration()
+
+    def _check_configuration(self):
+        if (self.get_username() == '' or \
+            self.get_password() == '' or \
+            self.get_server() == ''):
+            return False
+        return True
 
     def write_config(self):
         try:
