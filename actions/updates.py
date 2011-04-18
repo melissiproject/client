@@ -52,7 +52,7 @@ class GetUpdates(WorkerAction):
         if __debug__:
             dprint("Get updates failure", result)
 
-        raise RetryLater(2)
+        raise RetryLater()
 
 class CellUpdate(WorkerAction):
     def __init__(self, hub, pk, name, roots, owner, created, updated, deleted):
