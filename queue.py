@@ -2,6 +2,8 @@ if __debug__:
     from twisted.internet import reactor
     from Print import dprint
 
+from actions import GetUpdates
+
 class Queue(object):
     """ Simple Queue Service.
 
@@ -15,7 +17,7 @@ class Queue(object):
         self.queue = deque()
         self._notifications = []
         self.waiting_list = {}
-        self.hub = hub
+        self._hub = hub
 
         if __debug__:
             def report():
@@ -25,7 +27,14 @@ class Queue(object):
             reactor.callLater(0, report)
 
     def get(self):
-        return self.queue.popleft()
+        if not len(self.queue) and len(self.waiting_list):
+            # hmmm, something in waiting list and no items in the
+            # normal list. request a full getupdates
+            if __debug__:
+                dprint("Forcing a full update, due to waiting objects")
+            return GetUpdates(self._hub, full=True)
+        else:
+            return self.queue.popleft()
 
     def put(self, item):
         self.queue.append(item)
