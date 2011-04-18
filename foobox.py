@@ -26,13 +26,14 @@ class Hub():
         self.worker = None
         self.notify_manager = None
         self.queue = None
+        self.rest_client = None
 
 def main():
     # Parse options
     parser = OptionParser()
     parser.add_option("--config-file",
                       help="Path to configuration file",
-                      default=os.path.expanduser('~/.melisi/config')
+                      default=os.path.expanduser('~/.config/melissi/config')
                       )
     parser.add_option("--no-desktop",
                       help="Disable desktop",
@@ -45,10 +46,10 @@ def main():
     hub.queue = queue.Queue(hub)
     hub.config_manager = config.ConfigManager(hub, os.path.expanduser(options.config_file))
     hub.database_manager = database.DatabaseManager(hub, hub.config_manager.get_database())
+    hub.notify_manager = notifier.NotifyManager(hub)
     hub.desktop_tray = desktop.DesktopTray(hub,
                                            disable=hub.config_manager.config.get('main', 'no-desktop') == 'True' or options.no_desktop)
     hub.worker = worker.Worker(hub)
-    hub.notify_manager = notifier.NotifyManager(hub)
     hub.rest_client = restclient.RestClient(hub)
 
     # enable commander
