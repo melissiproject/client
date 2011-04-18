@@ -15,7 +15,6 @@ class GetUpdates(WorkerAction):
                                            self._hub.config_manager.get_timestamp()
                                            )
 
-
     def _add_to_queue(self, item, when=0):
         reactor.callLater(when, self._hub.queue.put, item)
 
@@ -41,7 +40,6 @@ class GetUpdates(WorkerAction):
             self._add_to_queue(
                 CellUpdate(hub=self._hub, **cell)
                 )
-
 
         # update timestamp
         self._hub.config_manager.set_timestamp(result['timestamp'])
