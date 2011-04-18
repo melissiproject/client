@@ -20,7 +20,7 @@ if __debug__:
 class RestClient():
     def __init__(self, hub):
         self.offline = True
-        self.hub = hub
+        self._hub = hub
         self.connect()
 
     def online(self):
@@ -28,26 +28,28 @@ class RestClient():
 
     def disconnect(self):
         self.offline = True
-        self.hub.desktop_tray.set_icon_offline()
-        self.hub.desktop_tray.set_connect_menu()
+        self._hub.desktop_tray.set_icon_offline()
+        self._hub.desktop_tray.set_connect_menu()
         if __debug__:
             dprint("Disconnected")
 
     def connect(self):
         if self._check_connection():
             self.offline = False
-            self.hub.desktop_tray.set_icon_ok()
-            self.hub.desktop_tray.set_disconnect_menu()
-            self.hub.queue.put(GetUpdates(self.hub))
-            reactor.callLater(0, self.hub.worker.work)
+            self._hub.desktop_tray.set_icon_ok()
+            self._hub.desktop_tray.set_disconnect_menu()
+            self._hub.queue.put(GetUpdates(self._hub))
+            reactor.callLater(0, self._hub.worker.work)
+        else:
+            self.disconnect()
 
     def _check_connection(self):
         # TODO
-        return True
+        return self._hub.config_manager.configured
 
     def _get_basic_auth_string(self):
-        username = self.hub.config_manager.get_username()
-        password = self.hub.config_manager.get_password()
+        username = self._hub.config_manager.get_username()
+        password = self._hub.config_manager.get_password()
 
         return 'Basic %s' % \
                base64.encodestring(':'.join((username, password)))[:-1]
@@ -56,7 +58,7 @@ class RestClient():
         data = {'username':username,
                 'password':password,
                 'email':email}
-        uri = '%s/api/user/' % self.hub.config_manager.get_server()
+        uri = '%s/api/user/' % self._hub.config_manager.get_server()
         return self._sendRequest('POST', uri, data, auth=False)
 
     def get(self, uri, data=None, file_handle=None):
@@ -160,21 +162,21 @@ class RestClient():
                 twisted.internet.error.TimeoutError), error:
 
             self.disconnect()
-            self.hub.desktop_tray.set_icon_offline("Connection failed")
+            self._hub.desktop_tray.set_icon_offline("Connection failed")
             reactor.callLater(2, self.connect)
 
         except twisted.web.error.Error, error:
             # TODO is there a way to directly see the error code
             if failure.getErrorMessage().startswith("401"):
                 self.disconnect()
-                self.hub.desktop_tray.set_icon_error("Authendication failed: Check your username and password")
+                self._hub.desktop_tray.set_icon_error("Authendication failed: Check your username and password")
                 # TODO pynotify
                 if __debug__:
                     dprint("Unable to login: Unauthorized message")
 
         except twisted.internet.error.SSLError:
             self.disconnect()
-            self.hub.desktop_tray.set_icon_error("SSLError: You need to change your settings")
+            self._hub.desktop_tray.set_icon_error("SSLError: You need to change your settings")
             if __debug__:
                 dprint("SSL Error while connecting")
 
