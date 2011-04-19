@@ -48,56 +48,6 @@ class DatabaseManager():
         version.value = u'1'
         self.store.add(version)
 
-        # TODO debug
-        ## host = Config()
-        ## host.name = u'host'
-        ## host.type = u'str'
-        ## host.value = u'localhost'
-        ## self.store.add(host)
-
-        ## port = Config()
-        ## port.name = u'port'
-        ## port.type = u'int'
-        ## port.value = u'8000'
-        ## self.store.add(port)
-
-        ## username = Config()
-        ## username.name = u'username'
-        ## username.type = u'str'
-        ## username.value = u'mpetzas'
-        ## self.store.add(username)
-
-        ## password = Config()
-        ## password.name = u'password'
-        ## password.type = u'str'
-        ## password.value = u'123'
-        ## self.store.add(password)
-
-        ## watchpath = Config()
-        ## watchpath.name = u'watchpath'
-        ## watchpath.type = u'str'
-        ## watchpath.value = u'./foobox'
-        ## self.store.add(watchpath)
-
-        ## timestamp = Config()
-        ## timestamp.name = u'timestamp'
-        ## timestamp.type = u'str'
-        ## timestamp.value = u'0'
-        ## self.store.add(timestamp)
-
-        ## timestamp = Config()
-        ## timestamp.name = u'basedir'
-        ## timestamp.type = u'str'
-        ## timestamp.value = u'-1'
-        ## self.store.add(timestamp)
-
-        ## record = File()
-        ## record.server_id = 1
-        ## record.filename = u''
-        ## record.directory = True
-        ## self.store.add(record)
-
-
         self.commit()
 
 
