@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# foobox modules
+# melissi modules
 import desktop
 import dbstorm as database
 import notifier
