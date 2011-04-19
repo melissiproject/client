@@ -44,7 +44,8 @@ class DesktopTray:
             self.items['status-icon'].set_visible(1)
 
             # open folder menu entry
-            item = gtk.MenuItem("Open Melissi Folder")
+            item = gtk.ImageMenuItem(gtk.STOCK_DIRECTORY)
+            item.set_label("Open Melissi Folder")
             item.connect('activate', self.open_folder)
             menu.append(item)
 
@@ -90,6 +91,13 @@ class DesktopTray:
             menu.append(item)
             self.items['connection-menu-item'] = item
 
+            # Connect / Disconnect menu entry
+            item = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
+            item.set_label("Force full resync")
+            item.connect('activate', self.force_full_resync)
+            menu.append(item)
+            self.items['full-resync-menu-item'] = item
+
             # Preferences menu entry
             item = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
             item.connect('activate', self.preferences)
@@ -102,6 +110,10 @@ class DesktopTray:
 
             if not self._hub.config_manager.configured:
                 reactor.callWhenRunning(self.wizard)
+
+    def force_full_resync(self):
+        """ Places a GetUpdates(full) in the Queue """
+        self._hub.queue.put(GetUpdates(self._hub, full=True))
 
     def set_recent_updates(self):
         i = 0
