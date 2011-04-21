@@ -25,7 +25,7 @@ class NotifyUser(WorkerAction):
 
     def _parse_avatar(self, result):
         # return filename
-        return result.name
+        return result.content.name
 
     def _execute(self):
         # pop notifications
@@ -42,8 +42,6 @@ class NotifyUser(WorkerAction):
         if self._hub.config_manager.config.get('main', 'desktop-notifications') == 'False' or \
                len(notifications) == 0:
             return
-
-
 
         # if one
         if len(notifications) == 1:

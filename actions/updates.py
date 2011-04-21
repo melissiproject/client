@@ -27,7 +27,7 @@ class GetUpdates(WorkerAction):
         return d
 
     def _success(self, result):
-        result = json.load(result)
+        result = json.load(result.content)
 
         if 'error' in result.keys():
             raise Exception(result['error'])
@@ -489,7 +489,7 @@ class DropletUpdate(WorkerAction):
         self._record.hash = self.revisions[-1]['content_md5']
 
         # check the hash
-        if not util.get_hash(f=result) == self._record.hash:
+        if not util.get_hash(f=result.content) == self._record.hash:
             # oups
             if __debug__:
                 dprint("Hashes don't match!")
@@ -504,7 +504,7 @@ class DropletUpdate(WorkerAction):
             os.chmod(self.fullpath, current_mode|256|128)
 
         # copy file
-        shutil.copyfile(result.name, self.fullpath)
+        shutil.copyfile(result.content.name, self.fullpath)
 
         # update time
         self._touch_file_datetime()

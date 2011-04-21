@@ -111,14 +111,14 @@ class ModifyFile(WorkerAction):
         return d
 
     def _success_droplet_callback(self, result):
-        result = json.load(result)
+        result = json.load(result.content)
         self._record.id = result['reply']['pk']
         self._record.revision = len(result['reply']['revisions'])
 
         return self._post_revision()
 
     def _success_revision_callback(self, result):
-        result = json.load(result)
+        result = json.load(result.content)
         self._record.signature = util.get_signature(self.fullpath)
         self._record.revision = result['reply']['number']
         self._record.modified = util.parse_datetime(result['reply']['revision']['created'])
@@ -190,7 +190,7 @@ class CreateDir(WorkerAction):
         return d
 
     def _success(self, result):
-        result = json.load(result)
+        result = json.load(result.content)
         self._record.id = result['reply']['pk']
         self._record.modified = util.parse_datetime(result['reply']['created'])
 

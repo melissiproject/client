@@ -87,7 +87,7 @@ class MoveFile(MoveObject):
 
 
     def _success(self, result):
-        result = json.load(result)
+        result = json.load(result.content)
         self._record.parent_id = result['reply']['cell']['pk']
         self._record.watchpath = self._parent.watchpath
         self._record.filename = pathjoin(self._parent.filename,
@@ -117,7 +117,7 @@ class MoveDir(MoveObject):
                                        self._record.id)
 
     def _success(self, result):
-        result = json.load(result)
+        result = json.load(result.content)
         self._record.parent_id = result['reply']['roots'][0]['pk']
         self._record.watchpath = self._parent.watchpath
         self._record.filename = pathjoin(self._parent.filename,
