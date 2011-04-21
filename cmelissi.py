@@ -107,6 +107,7 @@ def register(args):
     cmd = {'command':'REGISTER',
            'username':username,
            'password':password,
+           'password2':password,
            'email':email}
     command_list.append(json.dumps(cmd))
 
