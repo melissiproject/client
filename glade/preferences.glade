@@ -4,7 +4,7 @@
   <!-- interface-naming-policy project-wide -->
   <widget class="GtkDialog" id="preferences">
     <property name="border_width">5</property>
-    <property name="title" translatable="yes">Foobox Preferences</property>
+    <property name="title" translatable="yes">Melissi Preferences</property>
     <property name="resizable">False</property>
     <property name="window_position">center</property>
     <property name="icon">../images/icon-ok.svg</property>
@@ -20,7 +20,7 @@
               <widget class="GtkLabel" id="label4">
                 <property name="visible">True</property>
                 <property name="ypad">10</property>
-                <property name="label" translatable="yes">Foobox configuration</property>
+                <property name="label" translatable="yes">Melissi Configuration</property>
               </widget>
               <packing>
                 <property name="position">0</property>
