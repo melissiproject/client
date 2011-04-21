@@ -19,6 +19,9 @@ import recent_updates_template
 
 WEBKIT_WEB_NAVIGATION_REASON_OTHER = 5
 
+if __debug__:
+    from Print import dprint
+
 class DesktopTray:
     def __init__(self, hub, disable=False):
         self._hub = hub
@@ -378,22 +381,42 @@ class DesktopTray:
         password = unicode(self.gladefile["register"].
                            get_widget("password_entry").
                            get_text())
+        password2 = unicode(self.gladefile["register"].
+                            get_widget("password2_entry").
+                            get_text())
         email = unicode(self.gladefile["register"].
                            get_widget("email_entry").
                            get_text())
-
         host = unicode(self.gladefile["register"].
                        get_widget("host_entry").
                        get_text())
 
         self._hub.config_manager.set_server(host)
-        self._hub.rest_client.register(username, password, email)
+        self._hub.rest_client.disconnect()
 
-        self.gladefile["preferences"].get_widget("username_entry").set_text(username)
-        self.gladefile["preferences"].get_widget("password_entry").set_text(password)
-        self.gladefile["preferences"].get_widget("host_entry").set_text(host)
+        def server_response_success(response, widget):
+            self.gladefile["preferences"].get_widget("username_entry").set_text(username)
+            self.gladefile["preferences"].get_widget("password_entry").set_text(password)
+            self.gladefile["preferences"].get_widget("host_entry").set_text(host)
 
-        widget.window.destroy()
+            widget.window.destroy()
+
+        def server_response_fail(response):
+            if __debug__:
+                dprint("Error registering")
+
+            error = ""
+            error_message = json.load(response.value.content)
+            for key, e in error_message.iteritems():
+                error += '%s: <i>%s</i>\n\n' %\
+                         (key.capitalize(), ','.join(e))
+            error = error.strip()
+            self.gladefile["register"].get_widget("status").set_markup('<b>Error</b>:\n%s' % error)
+
+        self.gladefile["register"].get_widget("status").set_text("Registering...")
+        d = self._hub.rest_client.register(username, password, password2, email)
+        d.addCallback(server_response_success, widget)
+        d.addErrback(server_response_fail)
 
     def popup_menu_cb(self, widget, button, time, data = None):
         if button == 3:
