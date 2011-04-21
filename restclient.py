@@ -57,9 +57,10 @@ class RestClient():
         return 'Basic %s' % \
                base64.encodestring(':'.join((username, password)))[:-1]
 
-    def register(self, username, password, email):
+    def register(self, username, password, password2, email):
         data = {'username':username,
                 'password':password,
+                'password2': password2,
                 'email':email}
         uri = '%s/api/user/' % self._hub.config_manager.get_server()
         return self._sendRequest('POST', uri, data, auth=False)
@@ -132,7 +133,7 @@ class RestClient():
         request = agent.request(method, uri, headers, myProducer)
 
         def request_ok(response):
-            myReceiver.code = response.code
+            myReceiver.response.set_code(response.code)
 
             # workaround when sending a DELETE it seems that
             # connectionLost is never called from some reason also
