@@ -128,6 +128,6 @@ class MoveDir(MoveObject):
 
     def _failure(self, error):
         if __debug__:
-            dprint("Directory move failed", error)
+            dprint("Directory move failed", error.value.content.read())
 
         raise RetryLater
