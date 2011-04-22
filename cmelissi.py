@@ -32,7 +32,6 @@ class MelisiCommanderProtocol(LineReceiver):
     def connectionLost(self, reason):
         reactor.stop()
 
-
 class MelisiCommander(ClientFactory):
     protocol = MelisiCommanderProtocol
 
@@ -139,11 +138,17 @@ def deleteuser(args):
     cmd = {'command':'DELETEUSER'}
     command_list.append(json.dumps(cmd))
 
+def _timeout():
+    """ If I get called, I failed to contact melissi instance """
+    reactor.stop()
+    print "Failed to contact melissi instance"
+    os._exit(1)
+
 def main():
     parser = OptionParser()
     parser.add_option("--socket",
-                      help="UNIX socket where melisis client listens",
-                      default=os.path.expanduser("~/.melisi/melisi.sock")
+                      help="UNIX socket where melissi client listens",
+                      default=os.path.expanduser("~/.config/melisi/melisi.sock")
                       )
     (options, args) = parser.parse_args()
 
@@ -170,9 +175,9 @@ def main():
         sys.exit(1)
 
     melisi_commander = MelisiCommander(command_list)
-    reactor.connectUNIX(options.socket, melisi_commander, timeout=2)
+    reactor.connectUNIX(options.socket, melisi_commander)
+    reactor.callLater(2, _timeout)
     reactor.run()
-
 
 if __name__ == '__main__':
     main()
