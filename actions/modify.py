@@ -119,7 +119,8 @@ class ModifyFile(WorkerAction):
 
     def _success_revision_callback(self, result):
         result = json.load(result.content)
-        self._record.signature = util.get_signature(self.fullpath)
+        # self._record.signature = util.get_signature(self.fullpath)
+        self._record.signature = ''
         self._record.revision = result['reply']['number']
         self._record.modified = util.parse_datetime(result['reply']['revision']['created'])
 

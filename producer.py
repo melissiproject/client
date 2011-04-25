@@ -10,7 +10,7 @@ from twisted.protocols import basic
 from twisted.web import iweb
 from zope.interface import implements
 
-import librsync
+# import librsync
 
 class MultiPartProducer():
     """ A producer that sends files and parameters as a multi part request
@@ -164,21 +164,21 @@ class MultiPartProducer():
             size = os.fstat(handle.fileno()).st_size
             handle.seek(0)
 
-        elif isinstance(handle, librsync.DeltaFile):
-            # TODO
-            # I don't like this way of calculating.
-            # there should be a more elegant one
-            size = 0
-            while True:
-                line = handle.read(4096)
-                if not line: break
-                size += len(line)
+        # elif isinstance(handle, librsync.DeltaFile):
+        #     # TODO
+        #     # I don't like this way of calculating.
+        #     # there should be a more elegant one
+        #     size = 0
+        #     while True:
+        #         line = handle.read(4096)
+        #         if not line: break
+        #         size += len(line)
 
-            # DeltaFiles does not support seek,
-            # so basically with reset() I'm creating
-            # the file again. Since librsync patches
-            # on the fly (?) there is practically
-            # no overhead into recreating
-            handle.reset()
+        #     # DeltaFiles does not support seek,
+        #     # so basically with reset() I'm creating
+        #     # the file again. Since librsync patches
+        #     # on the fly (?) there is practically
+        #     # no overhead into recreating
+        #     handle.reset()
 
         return size

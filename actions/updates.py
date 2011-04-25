@@ -368,7 +368,8 @@ class DropletUpdate(WorkerAction):
         os.chmod(self.fullpath, current_mode|256|128)
 
     def _generate_signature(self):
-        return util.get_signature(self.fullpath)
+        # return util.get_signature(self.fullpath)
+        return ''
 
     def _execute(self):
         # if we don't know the file:

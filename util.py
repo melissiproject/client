@@ -1,6 +1,6 @@
 import os
 import hashlib
-import librsync
+# import librsync
 import tempfile
 import urllib
 from datetime import datetime, timedelta
@@ -46,57 +46,57 @@ def get_hash(filename=None, f=None):
         # TODO return error
         return 1
 
-def get_signature(filename):
-    try:
-        f = open(filename, 'rb')
-    except IOError:
-        # TODO add exception if we cannot open the file
-        if __debug__:
-            dprint("Signature exception", exception=1)
-        raise
+# def get_signature(filename):
+#     try:
+#         f = open(filename, 'rb')
+#     except IOError:
+#         # TODO add exception if we cannot open the file
+#         if __debug__:
+#             dprint("Signature exception", exception=1)
+#         raise
 
-    signature_file = librsync.SigFile(f)
-    signature = signature_file.read()
-    return signature
+#     signature_file = librsync.SigFile(f)
+#     signature = signature_file.read()
+#     return signature
 
-def get_delta(signature, filename):
-    ''' Get a filename and generate a delta for that file
-        Returns a file object with the delta '''
-    try:
-        f = open(filename, 'rb')
-    except IOError:
-        if __debug__:
-            dprint("Exception", filename, exception=1)
-        raise Exception("delta exception")
+# def get_delta(signature, filename):
+#     ''' Get a filename and generate a delta for that file
+#         Returns a file object with the delta '''
+#     try:
+#         f = open(filename, 'rb')
+#     except IOError:
+#         if __debug__:
+#             dprint("Exception", filename, exception=1)
+#         raise Exception("delta exception")
 
-    delta_file = librsync.DeltaFile(signature, f)
+#     delta_file = librsync.DeltaFile(signature, f)
 
-    return delta_file
+#     return delta_file
 
-def patch_file(delta, filename, hash=None):
-    # TODO using stringio means that we store delta into memory!
-    try:
-        f = open(filename, 'rb')
-    except IOError:
-        if __debug__:
-            dprint("Patch error, cannot open filename '%s'" % filename, exception=1)
-        raise Exception("Patch exception")
+# def patch_file(delta, filename, hash=None):
+#     # TODO using stringio means that we store delta into memory!
+#     try:
+#         f = open(filename, 'rb')
+#     except IOError:
+#         if __debug__:
+#             dprint("Patch error, cannot open filename '%s'" % filename, exception=1)
+#         raise Exception("Patch exception")
 
-    new_file = librsync.PatchedFile(f, delta)
-    tmp_file = tempfile.TemporaryFile(prefix='melisi-', suffix='.patched')
-    tmp_file.write(new_file.read())
-    tmp_file.seek(0)
-    if not hash or hash == get_hash(f=tmp_file):
-        try:
-            f = open(filename, 'wb')
-            f.write(tmp_file.read())
-            f.close()
-        except IOError:
-            raise Exception("Patch exception 2")
-    else:
-        if __debug__:
-            dprint(get_hash(f=tmp_file), hash)
-        raise Exception("Hashes don't match!")
+#     new_file = librsync.PatchedFile(f, delta)
+#     tmp_file = tempfile.TemporaryFile(prefix='melisi-', suffix='.patched')
+#     tmp_file.write(new_file.read())
+#     tmp_file.seek(0)
+#     if not hash or hash == get_hash(f=tmp_file):
+#         try:
+#             f = open(filename, 'wb')
+#             f.write(tmp_file.read())
+#             f.close()
+#         except IOError:
+#             raise Exception("Patch exception 2")
+#     else:
+#         if __debug__:
+#             dprint(get_hash(f=tmp_file), hash)
+#         raise Exception("Hashes don't match!")
 
 
 def create_path(path):
