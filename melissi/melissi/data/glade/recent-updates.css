@@ -1,0 +1,83 @@
+ /* using http://www.colourlovers.com/palette/1505059/The_Culinary_Edge */
+ /* pallete */
+
+body {
+ font-family: 'Lucida Grande',sans-serif;
+ background:#f2f2f0;
+ margin:10px;
+ overflow:auto;
+ /* background-image:url(gradientfromtop.gif); */
+ /* background-repeat:repeat-x; */
+}
+
+.day {
+ display: block;
+ clear: both;
+ text-align: left;
+ font-weight: bold;
+ font-size: 0.75em;
+ color: #6e8778;
+ margin-bottom: 20px;
+ margin-top: 20px;
+ border-bottom: 2px solid #eec795;
+}
+
+ol.updates {
+ list-style-image: nonel
+ list-style-position: outside;
+ list-style-type: none;
+ margin-top: 10px;
+ margin-bottom: 10px;
+ padding-left: 8px;
+ padding-right: 8px;
+}
+
+.thumb {
+ width: 35px;
+ height: 35px;
+}
+
+.content {
+ font-size: 0.71em;
+ word-wrap: break-word;
+ display: block;
+ min-height: 25px;
+}
+
+
+li.update {
+ border-bottom: 1px solid #e6e6e6;
+ padding-bottom: 5px;
+ margin-top: 10px;
+ min-height: 35px;
+}
+
+li:last-child {
+ border-bottom: 0;
+}
+
+.content a.file {
+ text-decoration: none;
+ font-weight: bold;
+}
+
+.content a.email {
+ text-decoration: none;
+}
+
+.meta {
+ font-size: 0.65em;
+}
+
+.thumb {
+ float: left;
+ padding-right: 10px;
+}
+
+.actions {
+ float: right;
+ /* right: 0; */
+ /* bottom: 12px; */
+ padding-right: 10px;
+ font-size: 0.65em;
+}
