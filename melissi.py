@@ -7,6 +7,7 @@ import notifier
 import worker
 import config
 import restclient
+import watchdog
 import commander
 import queue
 import twisted
@@ -27,6 +28,7 @@ class Hub():
         self.notify_manager = None
         self.queue = None
         self.rest_client = None
+        self.watch_dog = None
 
 def main():
     # Parse options
@@ -51,6 +53,7 @@ def main():
                                            disable=hub.config_manager.config.get('main', 'no-desktop') == 'True' or options.no_desktop)
     hub.worker = worker.Worker(hub)
     hub.rest_client = restclient.RestClient(hub)
+    hub.watch_dog = watchdog.WatchDog(hub)
 
     # enable commander
     command_receiver = commander.FooboxCommandReceiver(hub)

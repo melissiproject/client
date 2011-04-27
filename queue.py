@@ -24,17 +24,10 @@ class Queue(object):
                 print "Queue size: %s queued, %s waiting" % (len(self.queue), len(self.waiting_list))
                 reactor.callLater(3, report)
 
-            reactor.callLater(0, report)
+            reactor.callWhenRunning(report)
 
     def get(self):
-        if not len(self.queue) and len(self.waiting_list):
-            # hmmm, something in waiting list and no items in the
-            # normal list. request a full getupdates
-            if __debug__:
-                dprint("Forcing a full update, due to waiting objects")
-            return GetUpdates(self._hub, full=True)
-        else:
-            return self.queue.popleft()
+        return self.queue.popleft()
 
     def put(self, item):
         self.queue.append(item)
