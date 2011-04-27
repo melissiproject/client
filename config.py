@@ -17,8 +17,8 @@ class ConfigManager:
             self.config.set('main', 'username', '')
             self.config.set('main', 'password', '')
             self.config.set('main', 'host', 'http://')
-            self.config.set('main', 'database', 'sqlite:///%s/melisi.db' % config_path)
-            self.config.set('main', 'socket', '%s/melisi.sock' % config_path)
+            self.config.set('main', 'database', 'sqlite:///%s/melissi.db' % config_path)
+            self.config.set('main', 'socket', '%s/melissi.sock' % config_path)
             self.config.set('main', 'no-desktop', 'False')
             self.config.set('main', 'desktop-notifications', 'True')
             self.config.set('main', 'new-root-path',
