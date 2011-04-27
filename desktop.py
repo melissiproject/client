@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 import util
 import dbschema as db
 import recent_updates_template
+from actions.updates import GetUpdates
 
 WEBKIT_WEB_NAVIGATION_REASON_OTHER = 5
 
@@ -114,7 +115,7 @@ class DesktopTray:
             if not self._hub.config_manager.configured:
                 reactor.callWhenRunning(self.wizard)
 
-    def force_full_resync(self):
+    def force_full_resync(self, *args):
         """ Places a GetUpdates(full) in the Queue """
         self._hub.queue.put(GetUpdates(self._hub, full=True))
 
