@@ -68,7 +68,7 @@ class DeleteDir(DeleteObject):
                                     db.WatchPath.path == self.watchpath,
                                     db.WatchPath.id == db.File.watchpath_id
                                     ):
-            entry.remove()
+            self._dms.remove(entry)
 
         # delete self
         self._dms.remove(self._record)
