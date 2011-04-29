@@ -210,7 +210,6 @@ class NotifyManager():
             directories = self.watch_list
 
         for directory in directories:
-            print directory
             self.scan_directory(directory)
             for _, dirs, _ in os.walk(directory):
                 if dirs:
