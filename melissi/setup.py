@@ -23,7 +23,7 @@ _data_files = [
 setup(
     name='melissi',
     version=version_string,
-    author='Logiotatidis Giorgos',
+    author='Giorgos Logiotatidis',
     author_email='seadog@sealabs.net',
     maintainer='Tasos Katsoulas',
     maintainer_email='akatsoulas@gmail.com',
