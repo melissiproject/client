@@ -55,7 +55,7 @@ class GetUpdates(WorkerAction):
         raise RetryLater()
 
 class CellUpdate(WorkerAction):
-    def __init__(self, hub, pk, name, roots, owner, created, updated, deleted):
+    def __init__(self, hub, pk, name, roots, revisions, owner, created, updated, deleted):
         super(CellUpdate, self).__init__(hub)
 
         self.pk = pk
@@ -65,6 +65,7 @@ class CellUpdate(WorkerAction):
         self.deleted = deleted
         self.created = util.parse_datetime(created)
         self.updated = util.parse_datetime(updated)
+        self.revisions = revisions
 
         self._new = True
 
@@ -217,8 +218,9 @@ class CellUpdate(WorkerAction):
 
             # file was updated
             else:
-                # check if the file was moved
-                if self.roots[0]['pk'] != self._record.parent_id:
+                # check if the file was moved or renamed
+                if self.roots[0]['pk'] != self._record.parent_id or\
+                       self.name != self._record.filename:
                     parent = self.parent_exists()
                     oldfilename = self._record.filename
                     oldwatchpath = self._record.watchpath.path
@@ -247,6 +249,9 @@ class CellUpdate(WorkerAction):
 
         # update modified time
         self._record.modified = self.updated
+
+        # update revisions
+        self._record.revision = len(self.revisions)
 
         # notify user
         self._action_taken = True

@@ -124,6 +124,7 @@ class MoveDir(MoveObject):
                                          result['reply']['name']
                                          )
         self._record.modified = util.parse_datetime(result['reply']['updated'])
+        self._record.revision = len(result['reply']['revisions'])
         self._update_children()
 
     def _failure(self, error):

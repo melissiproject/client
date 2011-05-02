@@ -193,6 +193,7 @@ class CreateDir(WorkerAction):
     def _success(self, result):
         result = json.load(result.content)
         self._record.id = result['reply']['pk']
+        self._record.revision = len(result['reply']['revisions'])
         self._record.modified = util.parse_datetime(result['reply']['created'])
 
         # add to store
