@@ -13,6 +13,11 @@ class ConfigManager:
         if not self.config.sections():
             # run for the first time
             config_path = os.path.dirname(self.config_file) or "."
+            try:
+                import socket
+                resource = socket.gethostname()
+            except:
+                resource = 'default'
             self.config.add_section('main')
             self.config.set('main', 'username', '')
             self.config.set('main', 'password', '')
@@ -23,6 +28,7 @@ class ConfigManager:
             self.config.set('main', 'desktop-notifications', 'True')
             self.config.set('main', 'new-root-path',
                             '%s' % os.path.expanduser('~'))
+            self.config.set('main', 'resource', '%s' % resource)
 
             self.write_config()
 
@@ -48,6 +54,10 @@ class ConfigManager:
         with open(self.config_file, 'wb') as f:
             os.fchmod(f.fileno(), 0600)
             self.config.write(f)
+
+    def set_desktop_notifications(self, value):
+        self.config.set('main', 'desktop-notifications', value)
+        self.write_config()
 
     def get_username(self):
         return self.config.get('main', 'username')

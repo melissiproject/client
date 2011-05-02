@@ -95,7 +95,15 @@ class DesktopTray:
             menu.append(item)
             self.items['connection-menu-item'] = item
 
-            # Connect / Disconnect menu entry
+            # notifications entry
+            item = gtk.CheckMenuItem("Show notifications")
+            if self._hub.config_manager.config.get('main', 'desktop-notifications') == 'True':
+                item.set_active(True)
+            item.connect('activate', self.show_notifications_toggle)
+            menu.append(item)
+            self.items['notification-menu-item'] = item
+
+            # Full resync entry
             item = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
             item.set_label("Force full resync")
             item.connect('activate', self.force_full_resync)
@@ -114,6 +122,10 @@ class DesktopTray:
 
             if not self._hub.config_manager.configured:
                 reactor.callWhenRunning(self.wizard)
+
+    def show_notifications_toggle(self, widget):
+        value = str(not(self._hub.config_manager.config.get('main', 'desktop-notifications') == 'True'))
+        self._hub.config_manager.set_desktop_notifications(value)
 
     def force_full_resync(self, *args):
         """ Places a GetUpdates(full) in the Queue """
