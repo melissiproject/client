@@ -77,8 +77,9 @@ class MoveFile(MoveObject):
         super(MoveFile, self).__init__(hub, filename, old_filename, watchpath)
 
     def _get_data(self):
-        return {'name': os.path.basename(self.filename),
-                'cell':self._parent.id
+        return {'name'  : os.path.basename(self.filename),
+                'cell'  : self._parent.id,
+                'number': self._record.revision
                 }
 
     def _get_uri(self):
@@ -94,12 +95,11 @@ class MoveFile(MoveObject):
                                          result['reply']['name']
                                          )
         self._record.modified = util.parse_datetime(result['reply']['updated'])
-
-        self._update_children()
+        self._record.revision = len(result['reply']['revisions'])
 
     def _failure(self, error):
         if __debug__:
-            dprint("File move failed", error)
+            dprint("File move failed", error.value.content.read())
 
         raise RetryLater
 
@@ -108,8 +108,9 @@ class MoveDir(MoveObject):
         super(MoveDir, self).__init__(hub, filename, old_filename, watchpath)
 
     def _get_data(self):
-        return {'name': os.path.basename(self.filename),
-                'parent':self._parent.id
+        return {'name'  : os.path.basename(self.filename),
+                'parent': self._parent.id,
+                'number': self._record.revision
                 }
 
     def _get_uri(self):
@@ -125,6 +126,7 @@ class MoveDir(MoveObject):
                                          )
         self._record.modified = util.parse_datetime(result['reply']['updated'])
         self._record.revision = len(result['reply']['revisions'])
+        self._record.id = result['reply']['pk']
         self._update_children()
 
     def _failure(self, error):

@@ -121,8 +121,9 @@ class ModifyFile(WorkerAction):
         result = json.load(result.content)
         # self._record.signature = util.get_signature(self.fullpath)
         self._record.signature = None
-        self._record.revision = result['reply']['number']
-        self._record.modified = util.parse_datetime(result['reply']['revision']['created'])
+        self._record.revision = len(result['reply']['revisions'])
+        self._record.modified = util.parse_datetime(result['reply']['revisions'][-1]['created'])
+        self._record.id = result['reply']['pk']
 
     def _failure_callback(self, error):
         if __debug__:

@@ -17,6 +17,15 @@ if __debug__:
 WORKER_RECALL = 0.1
 gravatars = {}
 
+def append_to_filename(filename, append):
+    try:
+        base, ext = filename.split(".", 1)
+    except ValueError:
+        base = filename
+        ext = ''
+    base = base + " " + append
+    return base + ext
+
 def get_hash(filename=None, f=None):
     if filename:
         try:

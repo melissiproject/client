@@ -202,6 +202,12 @@ class CellUpdate(WorkerAction):
                 # if parent does not exist, add to queue
                 raise WaitItem(self.roots[0]['pk'])
 
+            # if revision is older than our revision, do nothing
+            if len(self.revisions) < self._record.revision:
+                raise DropItem("Local revision larger %s vs %s" %\
+                               (self._record.revision, len(self.revisions))
+                               )
+
             # file was deleted
             if self.deleted:
                 # remove from filesystem
@@ -220,7 +226,8 @@ class CellUpdate(WorkerAction):
             else:
                 # check if the file was moved or renamed
                 if self.roots[0]['pk'] != self._record.parent_id or\
-                       self.name != self._record.filename:
+                       self.name != os.path.basename(self._record.filename):
+
                     parent = self.parent_exists()
                     oldfilename = self._record.filename
                     oldwatchpath = self._record.watchpath.path
@@ -381,10 +388,10 @@ class DropletUpdate(WorkerAction):
         self._record = self.exists()
         if not self._record:
             self._new = True
+
             # and it's already delete don't worry
             if self.deleted:
                 return True
-
             # if cell does not exist, add to queue
             elif not self.cell_exists():
                 raise WaitItem(self.cell['pk'])
@@ -405,11 +412,32 @@ class DropletUpdate(WorkerAction):
             else:
                 # we need to fetch the file
                 # return deferred
+
+                # if path exists, and hash is not the same, then this
+                # is a conflict
+                if os.path.exists(self.fullpath):
+                    if __debug__:
+                        dprint("Conflict on file [%s]" % self.unique_id)
+
+                    resource = self.revisions[-1]['resource']
+                    if resource['user'] == self._hub.config_manager.get_username():
+                        msg = "your copy on '%s'" % resource['name']
+                    else:
+                        msg = "%s's copy" % resource['user']
+                    self._record.filename = util.append_to_filename(self._record.filename, msg)
+
                 return self._get_file()
 
         # we know the file
         else:
             self._new = False
+
+            # if revision is older than our revision, do nothing
+            if len(self.revisions) < self._record.revision:
+                raise DropItem("Local revision larger %s vs %s" %\
+                               (self._record.revision, len(self.revisions))
+                               )
+
             # if deleted call a delete
             if self.deleted:
                 # remove from fs
@@ -449,6 +477,8 @@ class DropletUpdate(WorkerAction):
                 # return self._get_patch()
                 return self._get_file()
 
+            raise DropItem("Do nothing")
+
     def _get_parent(self):
         parent = self._fetch_file_record(File__id=self.cell['pk'])
 
@@ -464,7 +494,6 @@ class DropletUpdate(WorkerAction):
         d = self._hub.rest_client.get(str(uri))
         d.addCallback(self._get_file_success)
         d.addErrback(self._failure)
-
         return d
 
     def _get_patch_success(self, result):
@@ -493,7 +522,6 @@ class DropletUpdate(WorkerAction):
     def _get_file_success(self, result):
         # ok same changes in db
         self._record.hash = self.revisions[-1]['content_md5']
-
         # check the hash
         if not util.get_hash(f=result.content) == self._record.hash:
             # oups
