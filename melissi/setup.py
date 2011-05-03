@@ -30,7 +30,7 @@ _data_files = [('share/man/man1',
 setup(
     name='melissi',
     version='0.1.0',
-    author='Logiotatidis Giorgos',
+    author='Giorgos Logiotatidis',
     author_email='seadog@sealabs.net',
     url='www.melissi.org',
     licence='GPLv3',
