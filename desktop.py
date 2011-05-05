@@ -132,6 +132,9 @@ class DesktopTray:
         self._hub.queue.put(GetUpdates(self._hub, full=True))
 
     def set_recent_updates(self):
+        if self.disable:
+            return
+
         i = 0
         q = self._hub.database_manager.store.find(db.File,
                                                  db.File.filename != u'')
