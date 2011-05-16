@@ -179,6 +179,8 @@ class NotifyManager():
         for record in self._dms.find(db.WatchPath):
             reactor.callWhenRunning(self.add_watch, record.path)
 
+
+
     def add_watch(self, directory):
         if __debug__:
             dprint("Adding ", directory)
@@ -201,6 +203,17 @@ class NotifyManager():
                 else:
                     # scan for new files
                     self.scan_directory(d)
+
+
+    def rescan_directories(self, directories=None):
+        if not directories:
+            directories = self.watch_list
+
+        for directory in directories:
+            self.scan_directory(directory)
+            for _, dirs, _ in os.walk(directory):
+                if dirs:
+                    self.rescan_directories(dirs)
 
 
     # must check self.watch_list values for this to work now

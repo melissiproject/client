@@ -120,9 +120,10 @@ class ModifyFile(WorkerAction):
     def _success_revision_callback(self, result):
         result = json.load(result.content)
         # self._record.signature = util.get_signature(self.fullpath)
-        self._record.signature = ''
-        self._record.revision = result['reply']['number']
-        self._record.modified = util.parse_datetime(result['reply']['revision']['created'])
+        self._record.signature = None
+        self._record.revision = len(result['reply']['revisions'])
+        self._record.modified = util.parse_datetime(result['reply']['revisions'][-1]['created'])
+        self._record.id = result['reply']['pk']
 
     def _failure_callback(self, error):
         if __debug__:
@@ -193,6 +194,7 @@ class CreateDir(WorkerAction):
     def _success(self, result):
         result = json.load(result.content)
         self._record.id = result['reply']['pk']
+        self._record.revision = len(result['reply']['revisions'])
         self._record.modified = util.parse_datetime(result['reply']['created'])
 
         # add to store

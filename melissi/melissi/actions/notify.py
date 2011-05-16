@@ -44,31 +44,40 @@ class NotifyUser(WorkerAction):
             return
 
         # if one
-        if len(notifications) == 1:
-            # do something
-            notification = notifications[0]
+        names = set(' '.join((n['owner']['first_name'], n['owner']['last_name'])) for n in notifications[:2])
 
-            message = "%(first_name)s %(last_name)s %(verb)s %(name)s" % ({
-                'first_name': notification['owner']['first_name'],
-                'last_name': notification['owner']['last_name'],
-                'verb': notification['verb'],
-                'name': notification['name']
-                })
+        if len(names) == 1:
+            # one user made all the changes
+            notification = notifications[0]
+            if len(notifications) == 1:
+                # do something
+                title = notification['name']
+                message = "%(first_name)s %(last_name)s %(verb)s %(name)s" % ({
+                    'first_name': notification['owner']['first_name'],
+                    'last_name': notification['owner']['last_name'],
+                    'verb': notification['verb'],
+                    'name': notification['name']
+                    })
+            else:
+                message = "Updates on multiple files from %(first_name)s %(last_name)s" %\
+                          notification['owner']
+                title = "Updates"
 
             d = self._hub.rest_client.get('http://www.gravatar.com/avatar/%s' % \
-                                          (hashlib.md5(notification['owner']['email']).hexdigest())
-                                          )
+                (hashlib.md5(notification['owner']['email']).hexdigest())
+            )
             d.addCallback(self._parse_avatar)
-            d.addCallback(self._show_notification, notification['name'] , message)
+            d.addCallback(self._show_notification, title, message)
 
         else:
             # do something else
-            message = "Multiple updates from %(names)s%(others)s"
+            message = "Updates on multiple files from %(name)s%(others)s"
+            others = ' and others' if len(names) > 2 else ''
+            names = ', '.join(names)
+
             self._show_notification(os.path.abspath("./images/icon-ok.svg"),
                                     "Updates",
-                                    message % ({'names': ', '.join(set(' '.join((n['owner']['first_name'], n['owner']['last_name'])) for n in notifications[:2])),
-                                                'others': ' and others' if len(set(' '.join((n['owner']['first_name'], n['owner']['last_name'])) for n in notifications)) > 2 else ''
+                                    message % ({'names': names,
+                                                'others': others,
                                                 }),
-
-
                                     )

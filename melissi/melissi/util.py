@@ -17,6 +17,15 @@ if __debug__:
 WORKER_RECALL = 0.1
 gravatars = {}
 
+def append_to_filename(filename, append):
+    try:
+        base, ext = filename.split(".", 1)
+    except ValueError:
+        base = filename
+        ext = ''
+    base = base + " " + append
+    return base + ext
+
 def get_hash(filename=None, f=None):
     if filename:
         try:
@@ -167,7 +176,12 @@ def urlencode(dic):
     return '?' + urllib.urlencode(dic)
 
 def parse_datetime(dt_string):
-    return datetime.strptime(dt_string, '%Y-%m-%d %H:%M:%S')
+    try:
+        return datetime.strptime(dt_string, '%Y-%m-%d %H:%M:%S')
+    except:
+        if __debug__:
+            dprint("Error parsing date string", dt_string, exception=1)
+        return '1970-1-1 00:00:00'
 
 def get_localtime(dt):
     """
