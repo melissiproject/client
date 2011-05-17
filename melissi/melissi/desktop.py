@@ -45,7 +45,7 @@ class DesktopTray:
             item = gtk.StatusIcon()
             item.set_from_file(
                 pkg_resources.resource_filename("melissi",
-                                                'data/images/icon-ok.svg')
+                                                'data/pixmaps/icon-ok.svg')
                 )
             item.set_visible(True)
             item.set_tooltip("Melissi ready")
@@ -208,7 +208,7 @@ class DesktopTray:
         if not self.disable:
             self.items['status-icon'].set_from_file(
                 pkg_resources.resource_filename("melissi",
-                                                'data/images/icon-offline.svg')
+                                                'data/pixmaps/icon-offline.svg')
                 )
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
@@ -217,7 +217,7 @@ class DesktopTray:
         if not self.disable:
             self.items['status-icon'].set_from_file(
                 pkg_resources.resource_filename("melissi",
-                                                'data/images/icon-ok.svg')
+                                                'data/pixmaps/icon-ok.svg')
                 )
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
@@ -226,7 +226,7 @@ class DesktopTray:
         if not self.disable:
             self.items['status-icon'].set_from_file(
                 pkg_resources.resource_filename("melissi",
-                                                'data/images/icon-update.svg')
+                                                'data/pixmaps/icon-update.svg')
                 )
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
@@ -235,7 +235,7 @@ class DesktopTray:
         if not self.disable:
             self.items['status-icon'].set_from_file(
                 pkg_resources.resource_filename("melissi",
-                                                'data/images/icon-error.svg')
+                                                'data/pixmaps/icon-error.svg')
                 )
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
@@ -329,7 +329,7 @@ class DesktopTray:
         # set icon
         window.set_icon_from_file(
             pkg_resources.resource_filename("melissi",
-                                            "data/images/icon-ok.svg")
+                                            "data/pixmaps/icon-ok.svg")
             )
 
         # create browser

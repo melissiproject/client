@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=Melissi
+GenericName=File Synchronization
+X-GNOME-FullName=Melissi File Synchronization
+Comment=Store and share files in the cloud
+TryExec=melissi
+Exec=melissi
+Icon=melissi
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;GTK
+StartupNotify=true

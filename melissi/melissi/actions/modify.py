@@ -3,6 +3,7 @@
 # CreateDir
 
 # melissi modules
+import melissi.util
 from melissi.actions import *
 
 class ModifyFile(WorkerAction):
@@ -53,7 +54,7 @@ class ModifyFile(WorkerAction):
     def _execute(self):
         self._parent = self._get_parent()
         self._record = self._record_get_or_create()
-        self._hash = util.get_hash(filename=self.fullpath)
+        self._hash = melissi.util.get_hash(filename=self.fullpath)
 
         if self._hash == self._record.hash:
             dprint("File not modified, ignoring")
@@ -123,7 +124,7 @@ class ModifyFile(WorkerAction):
         # self._record.signature = util.get_signature(self.fullpath)
         self._record.signature = None
         self._record.revision = len(result['reply']['revisions'])
-        self._record.modified = util.parse_datetime(result['reply']['revisions'][-1]['created'])
+        self._record.modified = melissi.util.parse_datetime(result['reply']['revisions'][-1]['created'])
         self._record.id = result['reply']['pk']
 
     def _failure_callback(self, error):
@@ -196,7 +197,7 @@ class CreateDir(WorkerAction):
         result = json.load(result.content)
         self._record.id = result['reply']['pk']
         self._record.revision = len(result['reply']['revisions'])
-        self._record.modified = util.parse_datetime(result['reply']['created'])
+        self._record.modified = melissi.util.parse_datetime(result['reply']['created'])
 
         # add to store
         self._dms.add(self._record)

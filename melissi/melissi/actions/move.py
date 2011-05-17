@@ -3,6 +3,7 @@
 # MoveDirectory
 
 # melissi modules
+import melissi.util
 from melissi.actions import *
 
 class MoveObject(WorkerAction):
@@ -96,7 +97,7 @@ class MoveFile(MoveObject):
         self._record.filename = pathjoin(self._parent.filename,
                                          result['reply']['name']
                                          )
-        self._record.modified = util.parse_datetime(result['reply']['updated'])
+        self._record.modified = melissi.util.parse_datetime(result['reply']['updated'])
         self._record.revision = len(result['reply']['revisions'])
 
     def _failure(self, error):
@@ -126,7 +127,7 @@ class MoveDir(MoveObject):
         self._record.filename = pathjoin(self._parent.filename,
                                          result['reply']['name']
                                          )
-        self._record.modified = util.parse_datetime(result['reply']['updated'])
+        self._record.modified = melissi.util.parse_datetime(result['reply']['updated'])
         self._record.revision = len(result['reply']['revisions'])
         self._record.id = result['reply']['pk']
         self._update_children()

@@ -7,6 +7,7 @@
 from shutil import rmtree
 
 # melissi modules
+import melissi.util
 from melissi.actions import *
 
 class GetUpdates(WorkerAction):
@@ -67,8 +68,8 @@ class CellUpdate(WorkerAction):
         self.roots = roots
         self.owner = owner
         self.deleted = deleted
-        self.created = util.parse_datetime(created)
-        self.updated = util.parse_datetime(updated)
+        self.created = melissi.util.parse_datetime(created)
+        self.updated = melissi.util.parse_datetime(updated)
         self.revisions = revisions
 
         self._new = True
@@ -191,7 +192,7 @@ class CellUpdate(WorkerAction):
             self._record = self._create_record()
 
             # create path
-            util.create_path(self.fullpath)
+            melissi.util.create_path(self.fullpath)
 
             # add a new watch
             self._hub.notify_manager.add_watch(self.fullpath)
@@ -276,8 +277,8 @@ class DropletUpdate(WorkerAction):
         self.cell = cell
         self.owner = owner
         self.deleted = deleted
-        self.created = util.parse_datetime(created)
-        self.updated = util.parse_datetime(updated)
+        self.created = melissi.util.parse_datetime(created)
+        self.updated = melissi.util.parse_datetime(updated)
         self.revisions = revisions
 
         self._new = True
@@ -405,7 +406,7 @@ class DropletUpdate(WorkerAction):
 
             # check if for some reason we already have the file
             if os.path.exists(self.fullpath) and \
-                   util.get_hash(self.fullpath) == self._record.hash:
+                   melissi.util.get_hash(self.fullpath) == self._record.hash:
 
                 # ensure that we can read/write it
                 self.fix_permissions()
@@ -428,7 +429,7 @@ class DropletUpdate(WorkerAction):
                         msg = "your copy on '%s'" % resource['name']
                     else:
                         msg = "%s's copy" % resource['user']
-                    self._record.filename = util.append_to_filename(self._record.filename, msg)
+                    self._record.filename = melissi.util.append_to_filename(self._record.filename, msg)
 
                 return self._get_file()
 
@@ -502,7 +503,7 @@ class DropletUpdate(WorkerAction):
 
     def _get_patch_success(self, result):
         # try patching
-        util.patch_file(result, self.fullpath, self.revisions[-1]['content_md5'])
+        melissi.util.patch_file(result, self.fullpath, self.revisions[-1]['content_md5'])
 
         # ok same changes in db
         self._record.signature = self._generate_signature()
@@ -527,7 +528,7 @@ class DropletUpdate(WorkerAction):
         # ok same changes in db
         self._record.hash = self.revisions[-1]['content_md5']
         # check the hash
-        if not util.get_hash(f=result.content) == self._record.hash:
+        if not melissi.util.get_hash(f=result.content) == self._record.hash:
             # oups
             if __debug__:
                 dprint("Hashes don't match!")
