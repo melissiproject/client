@@ -40,7 +40,10 @@ setup(
     keywords = ['file synchronization', 'cloud storage', 'client', 'python'],
     description = 'Cloud Storage Client',
     long_description = open('README.txt').read(),
-    packages = find_packages(exclude=['docs'])
+
+    #TODO classifiers for the Pypi
+    # package_dir = {'melissi':'melissi'},
+    packages = ['melissi','melissi.actions'],
     package_data = {'melissi':['data/pixmaps/*.svg',
                                'data/glade/*',
                                ]
