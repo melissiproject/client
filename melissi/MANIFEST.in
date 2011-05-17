@@ -1,4 +1,6 @@
 include *.txt
 recursive-include docs *
 recursive-include melissi/data/glade *.png *.glade *.css *.html
-recursive-include melissi/data/images *.svg
+recursive-include melissi/data/icons/scalable/apps/ *.svg
+recursive-include melissi/data/pixmaps/ *.svg
+recursive-include melissi/data/share/applications/ *.desktop
