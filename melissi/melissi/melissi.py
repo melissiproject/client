@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# standard modules
+from optparse import OptionParser
+import os
+import sys
+
 # melissi modules
 import desktop
 import dbstorm as database
@@ -12,12 +17,9 @@ import commander
 import queue
 import twisted
 
-# standard modules
-from optparse import OptionParser
+# extra modules
+# reactor must install last
 from twisted.internet import reactor
-import os
-import sys
-
 
 class Hub():
     def __init__(self):

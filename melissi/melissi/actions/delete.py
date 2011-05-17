@@ -3,13 +3,14 @@
 # DeleteDir
 # DeleteFile
 
+# standard modules
 import shutil
 import os
 
-from actions import *
-
+# melissi modules
+from melissi.actions import *
 if __debug__:
-    from Print import dprint
+    from melissi.Print import dprint
 
 class DeleteObject(WorkerAction):
     """ lala """

@@ -1,7 +1,9 @@
+# extra modules
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
-from actions.updates import GetUpdates
 
+# melissi modules
+from actions.updates import GetUpdates
 if __debug__:
     from Print import dprint
 

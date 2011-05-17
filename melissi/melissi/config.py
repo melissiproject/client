@@ -1,5 +1,8 @@
+# standard modules
 import ConfigParser
 import os
+
+# melissi modules
 import dbschema as db
 
 class ConfigManager:

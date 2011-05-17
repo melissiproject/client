@@ -1,7 +1,9 @@
+# standard modules
 import urllib
 import json
 import base64
 
+# extra modules
 from twisted.internet import reactor
 from twisted.web import client
 from twisted.web import http_headers
@@ -9,11 +11,10 @@ from twisted.internet.defer import Deferred
 import twisted.internet.error
 import twisted.web.error
 
+# melissi modules
 import producer
 import receiver
-
 from actions import *
-
 if __debug__:
     from Print import dprint
 

@@ -1,27 +1,34 @@
+# extra modules
+# must install on top
 from twisted.internet import gtk2reactor
 gtk2reactor.install()
 from twisted.internet import reactor
+
+# standard
 import hashlib
 import tempfile
 import os
+import json
+import pkg_resources
+from datetime import datetime, timedelta
 from os.path import basename, join as pathjoin
+
+# extra modules
 import pygtk
 pygtk.require('2.0')
 import gtk
 import gtk.glade
 import webkit
-import json
-from datetime import datetime, timedelta
 
+# melissi
 import util
 import dbschema as db
 import recent_updates_template
 from actions.updates import GetUpdates
-
-WEBKIT_WEB_NAVIGATION_REASON_OTHER = 5
-
 if __debug__:
     from Print import dprint
+
+WEBKIT_WEB_NAVIGATION_REASON_OTHER = 5
 
 class DesktopTray:
     def __init__(self, hub, disable=False):
@@ -36,7 +43,10 @@ class DesktopTray:
             self.gladefile = {}
             # status icon
             item = gtk.StatusIcon()
-            item.set_from_file('./images/icon-ok.svg')
+            item.set_from_file(
+                pkg_resources.resource_filename("melissi",
+                                                'data/images/icon-ok.svg')
+                )
             item.set_visible(True)
             item.set_tooltip("Melissi ready")
             item.connect("activate", self.open_folder)
@@ -196,25 +206,37 @@ class DesktopTray:
 
     def set_icon_offline(self, tooltip="Melissi Offline"):
         if not self.disable:
-            self.items['status-icon'].set_from_file('./images/icon-offline.svg')
+            self.items['status-icon'].set_from_file(
+                pkg_resources.resource_filename("melissi",
+                                                'data/images/icon-offline.svg')
+                )
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
     def set_icon_ok(self, tooltip="Melissi Ready"):
         if not self.disable:
-            self.items['status-icon'].set_from_file('./images/icon-ok.svg')
+            self.items['status-icon'].set_from_file(
+                pkg_resources.resource_filename("melissi",
+                                                'data/images/icon-ok.svg')
+                )
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
     def set_icon_update(self, tooltip="Melissi Working"):
         if not self.disable:
-            self.items['status-icon'].set_from_file('./images/icon-update.svg')
+            self.items['status-icon'].set_from_file(
+                pkg_resources.resource_filename("melissi",
+                                                'data/images/icon-update.svg')
+                )
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
     def set_icon_error(self, tooltip="Melissi Error"):
         if not self.disable:
-            self.items['status-icon'].set_from_file('./images/icon-error.svg')
+            self.items['status-icon'].set_from_file(
+                pkg_resources.resource_filename("melissi",
+                                                'data/images/icon-error.svg')
+                )
             self.items['status-icon'].set_tooltip(tooltip)
             self.set_menu_info(tooltip)
 
@@ -297,11 +319,18 @@ class DesktopTray:
                                                }
 
     def more_updates(self, widget):
-        self.gladefile["recent-updates"] = gtk.glade.XML("glade/recent-updates.glade")
+        self.gladefile["recent-updates"] = gtk.glade.XML(
+            pkg_resources.resource_filename("",
+                                            "data/glade/recent-updates.glade"
+                                            )
+            )
         window = self.gladefile["recent-updates"].get_widget("recent-updates")
 
         # set icon
-        window.set_icon_from_file("./images/icon-ok.svg")
+        window.set_icon_from_file(
+            pkg_resources.resource_filename("melissi",
+                                            "data/images/icon-ok.svg")
+            )
 
         # create browser
         scrolled_window = self.gladefile["recent-updates"].get_widget("scrolledwindow1")
@@ -349,7 +378,11 @@ class DesktopTray:
         window.show_all()
 
     def wizard(self):
-        self.gladefile["wizard"] = gtk.glade.XML("glade/wizard.glade")
+        self.gladefile["wizard"] = gtk.glade.XML(
+            pkg_resources.resource_filename("melissi",
+                                            "data/glade/wizard.glade"
+                                            )
+            )
         window = self.gladefile["wizard"].get_widget("wizard")
 
         def fire_prefs(window):
@@ -362,7 +395,11 @@ class DesktopTray:
         window.show_all()
 
     def preferences(self, widget=None):
-        self.gladefile["preferences"] = gtk.glade.XML("glade/preferences.glade")
+        self.gladefile["preferences"] = gtk.glade.XML(
+            pkg_resources.resource_filename("melissi",
+                                            "data/glade/preferences.glade"
+                                            )
+            )
         window = self.gladefile["preferences"].get_widget("preferences")
 
         button_cancel = self.gladefile["preferences"].get_widget("cancel")
@@ -379,7 +416,11 @@ class DesktopTray:
         window.show_all()
 
     def register(self, widget):
-        self.gladefile["register"] = gtk.glade.XML("glade/register.glade")
+        self.gladefile["register"] = gtk.glade.XML(
+            pkg_resources.resource_filename("melissi",
+                                            "data/glade/register.glade"
+                                            )
+            )
         window = self.gladefile["register"].get_widget("register")
 
         button_cancel = self.gladefile["register"].get_widget("cancel")

@@ -2,8 +2,12 @@
 # GetUpdates
 # CellUpdate
 # DropletUpdate
+
+# standard modules
 from shutil import rmtree
-from actions import *
+
+# melissi modules
+from melissi.actions import *
 
 class GetUpdates(WorkerAction):
     def __init__(self, hub, full=False):

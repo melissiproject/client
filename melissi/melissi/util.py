@@ -1,16 +1,18 @@
+# standard modules
 import os
 import hashlib
-# import librsync
 import tempfile
 import urllib
-from datetime import datetime, timedelta
 import subprocess
 import pynotify
-from glib import GError
 import time
+from glib import GError
+from datetime import datetime, timedelta
 
-
+# extra modules
 from twisted.web import client
+
+# melissi modules
 if __debug__:
     from Print import dprint
 

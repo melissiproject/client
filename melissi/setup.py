@@ -16,7 +16,7 @@ from distutils.command.install_data import install_data
 #TODO change to setuptools
 
 include_dirs=[]
-#version_string='0.1.0'
+version_string='0.1.0'
 
 _data_files = [
     ('share/man/man1', ['docs/man/man1.txt']),

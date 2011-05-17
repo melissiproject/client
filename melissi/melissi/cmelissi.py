@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Foobox command line tool
+# Melissi command line tool
 #
 # Yeah ;)
 
@@ -10,6 +10,7 @@ import os
 import json
 from optparse import OptionParser
 
+# extra modules
 from twisted.internet import reactor
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import ClientFactory

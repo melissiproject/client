@@ -2,7 +2,8 @@
 # ModifyFile
 # CreateDir
 
-from actions import *
+# melissi modules
+from melissi.actions import *
 
 class ModifyFile(WorkerAction):
     def __init__(self, hub, filename, watchpath):

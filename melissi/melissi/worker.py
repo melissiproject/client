@@ -1,14 +1,15 @@
 #
 # This is documentation for worker
 #
+
+# extra modules
 from twisted.internet import reactor
 from twisted.internet import defer
 
+# melissi modules
 import util
 import dbschema as db
-
 from actions import *
-
 if __debug__:
     from Print import dprint
 

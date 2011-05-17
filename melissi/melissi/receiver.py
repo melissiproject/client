@@ -1,6 +1,10 @@
-# code from http://github.com/mariano/pyfire/blob/master/pyfire/twistedx/receiver.py
+# Original code from http://github.com/mariano/pyfire/blob/master/pyfire/twistedx/producer.py
+# heavily modified for melissi
+
+# standard modules
 import tempfile
 
+# extra modules
 from twisted.internet import protocol
 from twisted.web import client
 

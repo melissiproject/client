@@ -1,11 +1,16 @@
 # Contains
 # Notify User
+
+# standard modules
 import hashlib
+
+# extra modules
 import gtk
 import pynotify
 from glib import GError
 
-from actions import *
+# melissi modules
+from melissi.actions import *
 
 class NotifyUser(WorkerAction):
     def _get_gravatar_image(email):

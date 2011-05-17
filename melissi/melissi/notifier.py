@@ -1,13 +1,16 @@
-import util
-import pyinotify
+# standard modules
 import os
 import sys
-from twisted.internet import abstract, reactor
 from os.path import join as pathjoin
 
+# extra modules
+from twisted.internet import abstract, reactor
+import pyinotify
+
+# melissi modules
+import util
 import dbschema as db
 from actions import *
-
 if __debug__:
     from Print import dprint
 

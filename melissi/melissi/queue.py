@@ -1,8 +1,8 @@
+# melissi. modules
+from actions import GetUpdates
 if __debug__:
     from twisted.internet import reactor
     from Print import dprint
-
-from actions import GetUpdates
 
 class Queue(object):
     """ Simple Queue Service.

@@ -1,21 +1,23 @@
 #
 #
+
+# standard modules
 import json
 import tempfile
 import os
+import shutil
 from datetime import datetime, timedelta
 from os.path import join as pathjoin
-import shutil
 
+# extra modules
 from twisted.internet import reactor
 import twisted.internet.defer as defer
 
-import dbschema as db
-import util
-
+# melissi modules
+import melissi.dbschema as db
+import melissi.util
 if __debug__:
-    from Print import dprint
-
+    from melissi.Print import dprint
 
 class NotImplementedError(Exception):
     """

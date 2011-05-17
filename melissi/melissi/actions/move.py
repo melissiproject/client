@@ -1,7 +1,9 @@
 # Contains
 # MoveFile
 # MoveDirectory
-from actions import *
+
+# melissi modules
+from melissi.actions import *
 
 class MoveObject(WorkerAction):
     def __init__(self, hub, filename, old_filename, watchpath):

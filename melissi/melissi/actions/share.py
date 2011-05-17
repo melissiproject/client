@@ -1,8 +1,11 @@
 # Contains
 # Share
-from actions import *
+
+# melissi modules
+from melissi.actions import *
+
 if __debug__:
-    from Print import dprint
+    from melissi.Print import dprint
 
 class Share(WorkerAction):
     def __init__(self, hub, filename, watchpath, mode, user):

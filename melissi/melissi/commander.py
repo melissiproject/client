@@ -1,11 +1,14 @@
+# standard modules
+import json
+
+# extra modules
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import ServerFactory
 import twisted.internet.defer  as defer
-import json
 
+# melissi modules
 import dbschema as db
 from actions import NotImplementedError, Share
-
 
 class CommanderAction(object):
     def __init__(self, hub, command):

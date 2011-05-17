@@ -1,10 +1,13 @@
-# Code from http://github.com/mariano/pyfire/blob/master/pyfire/twistedx/producer.py
+# Original code from http://github.com/mariano/pyfire/blob/master/pyfire/twistedx/producer.py
+# heavily modified for melissi
 
+# standard modules
 import urllib
 import os
 import random
 from string import letters
 
+# extra modules
 from twisted.internet import defer
 from twisted.protocols import basic
 from twisted.web import iweb
