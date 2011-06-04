@@ -32,7 +32,7 @@ class ModifyFile(WorkerAction):
             record.hash = None
             record.watchpath_id = self._parent.watchpath.id
             record.directory = False
-            record.revision = 0
+            record.revision = 1
             record.parent_id = self._parent.id
             self._dms.add(record)
 
@@ -165,7 +165,7 @@ class CreateDir(WorkerAction):
         record.hash = None
         record.watchpath_id = self._parent.watchpath.id
         record.directory = True
-        record.revision = None
+        record.revision = 1
         record.parent_id = self._parent.id
 
         return record
@@ -184,7 +184,8 @@ class CreateDir(WorkerAction):
 
         uri = '%s/api/cell/' % (self._hub.config_manager.get_server())
         data = {'name': os.path.basename(self.filename),
-                'parent':self._parent.id
+                'parent': self._parent.id,
+                'number': self._record.revision
                 }
 
         d = self._hub.rest_client.post(str(uri), data=data)
