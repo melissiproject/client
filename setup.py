@@ -58,4 +58,5 @@ setup(
     entry_points = {
         'console_scripts':['melissi = melissi.melissi:main']
         },
-    )
+    install_requires=['Twisted', 'storm']
+)
