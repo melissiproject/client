@@ -32,10 +32,9 @@ def get_hash(filename=None, f=None):
     if filename:
         try:
             f = open(filename, 'rb')
-        except IOError:
-            # TODO add exception if we cannot open the file
-            if __debug__:
-                dprint("sha256 exception", exception=1)
+        except IOError, e:
+            raise e
+
     if f:
         hash_function = hashlib.md5()
         while True:
