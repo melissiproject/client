@@ -44,10 +44,14 @@ class ModifyFile(WorkerAction):
                                          )
 
         if not parent:
-            # sadly we cannot use WaitItem because we don't know
-            # cellid yet
-            raise RetryLater("Parent does not exist in db [%s]" % \
-                             os.path.dirname(self.filename))
+            if os.path.exists(os.path.dirname(pathjoin(self.watchpath, self.filename))):
+                # sadly we cannot use WaitItem because we don't know
+                # cellid yet
+                raise RetryLater("Parent does not exist in db [%s]" % \
+                                 os.path.dirname(self.filename))
+            else:
+                raise DropItem("Parent does not exist in db or fs [%s]" % \
+                               os.path.dirname(self.filename))
         else:
             return parent
 
@@ -70,7 +74,7 @@ class ModifyFile(WorkerAction):
             try:
                 self._file_handler = open(self.fullpath)
             except (OSError, IOError) as error_message:
-                raise RetryLater("Erro opening file")
+                raise RetryLater("Error opening file")
             return self._put_revision()
 
         else:
@@ -107,7 +111,7 @@ class ModifyFile(WorkerAction):
                 'number': self._record.revision,
                 'patch': False
                 }
-        d = self._hub.rest_client.put(str(uri), data=data, file_handle=self._file_handler)
+        d = self._hub.rest_client.post(str(uri), data=data, file_handle=self._file_handler)
         d.addCallback(self._success_revision_callback)
         d.addErrback(self._failure_callback)
         return d
@@ -154,8 +158,12 @@ class CreateDir(WorkerAction):
                                          WatchPath__path=self.watchpath
                                          )
         if not parent:
-            raise RetryLater("Parent does not exist in db [%s]" % \
-                             os.path.dirname(self.filename))
+            if os.path.exists(os.path.dirname(pathjoin(self.watchpath, self.filename))):
+                raise RetryLater("Parent does not exist in db [%s]" % \
+                                 os.path.dirname(self.filename))
+            else:
+                raise DropItem("Parent does not exists in db or fs [%s]" % \
+                               os.path.dirname(self.filename))
         else:
             return parent
 
