@@ -25,6 +25,8 @@ class DatabaseManager():
 
         return SCHEMA_VERSION
 
+    def clear_all(self):
+        self.store.execute("DELETE FROM file")
 
     def _upgrade_schema(self):
         # TODO
