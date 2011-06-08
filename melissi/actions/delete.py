@@ -26,7 +26,7 @@ class DeleteObject(WorkerAction):
         if self._record:
             return self._record.id
         else:
-            return filename
+            return self.filename
 
     def exists(self):
         # return record if item exists in the database
