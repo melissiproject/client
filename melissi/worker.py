@@ -79,6 +79,11 @@ class Worker():
                 dprint("DropItem ", e)
             pass
 
+        except IOError, e:
+            if __debug__:
+                dprint("IOError dropping item", e)
+            pass
+
         except Exception, e:
             dprint("UNEXPECTED Exception ", e, exception=1)
             dprint("Item ", item)
