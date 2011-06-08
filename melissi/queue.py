@@ -1,5 +1,9 @@
+# standard modules
+from collections import deque
+
 # melissi. modules
-from actions import GetUpdates
+from actions import GetUpdates, CreateDir, MoveDir
+
 if __debug__:
     from twisted.internet import reactor
     from Print import dprint
@@ -13,7 +17,6 @@ class Queue(object):
     """
 
     def __init__(self, hub):
-        from collections import deque
         self.queue = deque()
         self._notifications = []
         self.waiting_list = {}
@@ -30,7 +33,17 @@ class Queue(object):
         return self.queue.popleft()
 
     def put(self, item):
-        self.queue.append(item)
+        if isinstance(item, CreateDir) or \
+           isinstance(item, MoveDir):
+            # place in the top of the queue
+            self.queue.appendleft(item)
+        else:
+            self.queue.append(item)
+
+    def clear_all(self):
+        self.queue = deque()
+        self._notifications = []
+        self.waiting_list = {}
 
     def __contains__(self, item):
         if item in self.queue:
