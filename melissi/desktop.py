@@ -139,7 +139,13 @@ class DesktopTray:
 
     def force_full_resync(self, *args):
         """ Places a GetUpdates(full) in the Queue """
+        # delete all queue contents
+        self._hub.queue.clear_all()
+        # delete all database contents
+        self._hub.database_manager.clear_all()
+        # force a full resync
         self._hub.queue.put(GetUpdates(self._hub, full=True))
+        self._hub.queue.put(RescanDirectories(self._hub))
 
     def set_recent_updates(self):
         if self.disable:
