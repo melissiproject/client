@@ -165,3 +165,4 @@ from delete import *
 from move import *
 from notify import *
 from share import *
+from fs import *
