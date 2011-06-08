@@ -37,14 +37,14 @@ class GetUpdates(WorkerAction):
         if 'error' in result.keys():
             raise Exception(result['error'])
 
-        for droplet in result['reply']['droplets']:
-            self._add_to_queue(
-                DropletUpdate(hub=self._hub, **droplet)
-                )
-
         for cell in result['reply']['cells']:
             self._add_to_queue(
                 CellUpdate(hub=self._hub, **cell)
+                )
+
+        for droplet in result['reply']['droplets']:
+            self._add_to_queue(
+                DropletUpdate(hub=self._hub, **droplet)
                 )
 
         # update timestamp
