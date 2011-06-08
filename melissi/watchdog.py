@@ -3,7 +3,7 @@ from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 
 # melissi modules
-from actions.updates import GetUpdates
+from actions.updates import GetUpdates, RescanDirectories
 if __debug__:
     from Print import dprint
 
@@ -28,6 +28,12 @@ class WatchDog(object):
         self._looping_call = LoopingCall(self._watch)
         self._looping_call.start(self._check_every_seconds)
 
+    def set_threshold(self, value, force=False):
+        if self._threshold < value:
+            self._threshold = value
+
+        return self._threshold
+
     def _watch(self):
         if not len(self._hub.queue.queue) and len(self._hub.queue.waiting_list):
             if self._trigger < self._threshold:
@@ -40,7 +46,7 @@ class WatchDog(object):
                 if __debug__:
                     dprint("Forcing a rescan, due to waiting objects")
                 self._trigger += 1
-                self._hub.notify_manager.rescan_directories()
+                self._hub.queue.put(RescanDirectories(self._hub))
 
             elif self._trigger < self._threshold + 2:
                 # trigger full update

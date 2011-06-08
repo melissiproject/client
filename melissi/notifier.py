@@ -150,12 +150,22 @@ class HandleEvents(pyinotify.ProcessEvent):
             return
 
         if event.dir:
+            print event
             self.manager.add_to_queue(MoveDir(self.manager.hub,
                                               filename,
                                               old_filename,
                                               watched_dir),
                                       pathjoin(watched_dir, filename)
                                       )
+            # lets rescan directories
+            # maybe we dropped files what were queued while in the old directory
+            # now it's time to re-add them
+            self.manager.add_to_queue(RescanDirectories(self.manager.hub,
+                                                        [pathjoin(watched_dir, filename)]
+                                                        ),
+                                      pathjoin(watched_dir, filename)
+                                      )
+
         else:
             self.manager.add_to_queue(MoveFile(self.manager.hub,
                                                filename,
@@ -163,9 +173,9 @@ class HandleEvents(pyinotify.ProcessEvent):
                                                watched_dir),
                                       pathjoin(watched_dir, filename)
                                       )
-    # # for debuging proposes only
-    # def process_default(self, event):
-    #     print event
+    # for debuging proposes only
+    def process_default(self, event):
+        print event
 
 
 class NotifyManager():
@@ -216,7 +226,9 @@ class NotifyManager():
             self.scan_directory(directory)
             for _, dirs, _ in os.walk(directory):
                 if dirs:
-                    self.rescan_directories(dirs)
+                    self.rescan_directories(
+                        map(lambda x: pathjoin(directory, x), dirs)
+                        )
 
 
     # must check self.watch_list values for this to work now
