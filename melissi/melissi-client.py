@@ -51,7 +51,7 @@ def setup_logging(level):
     x = logging.getLogger("melissilogger")
     x.setLevel(level)
     h = logging.StreamHandler()
-    f = logging.Formatter("\t%(levelname)s\t %(module)s/%(filename)s:%(lineno)d \t\t%(funcName)s\t\t | %(message)s")
+    f = logging.Formatter(" %(levelname)-10s %(module)-10s %(filename)s:%(lineno)d \t%(funcName)-20s\t | %(message)s")
     h.setFormatter(f)
     x.addHandler(h)
 
