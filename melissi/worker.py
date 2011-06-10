@@ -2,6 +2,10 @@
 # This is documentation for worker
 #
 
+# stardard modules
+import logging
+log = logging.getLogger("melissilogger")
+
 # extra modules
 from twisted.internet import reactor
 from twisted.internet import defer
@@ -10,10 +14,8 @@ from twisted.internet import defer
 import util
 import dbschema as db
 from actions import *
-if __debug__:
-    from Print import dprint
 
-class Worker():
+class Worker(object):
     def __init__(self, hub):
         self._hub = hub
         self._dms = self._hub.database_manager.store
@@ -48,8 +50,7 @@ class Worker():
 
     def process_item(self, item):
         # notify tray and stdout
-        if __debug__:
-            dprint("Worker processing ", item.action_name)
+        log.info("Worker processing %s" % item.action_name)
 
         d = defer.maybeDeferred(item)
         d.addErrback(self._action_failure, item)
@@ -57,38 +58,36 @@ class Worker():
 
     def _action_failure(self, failure, item):
         # rollback database
-        if __debug__:
-            dprint("rolling back [%s]" % item)
+        log.info("Rolling back [%s]" % item)
+
         self._hub.database_manager.rollback()
 
         try:
             failure.raiseException()
 
         except WaitItem, e:
-            if __debug__:
-                dprint("Item %s waits for %s" % (item.pk, e.id))
+            log.debug("Item %s waits for %s" % (item.pk, e.id))
             self._hub.queue.put_into_waiting_list(e.id, item)
 
         except RetryLater, e:
-            if __debug__:
-                dprint("RetryLater ", e)
+            log.debug("RetryLater")
+            log.debug(e)
             reactor.callLater(e.time, self._hub.queue.put, item)
 
         except DropItem, e:
-            if __debug__:
-                dprint("DropItem ", e)
+            log.debug("DropItem")
+            log.debug(e)
             pass
 
         except IOError, e:
-            if __debug__:
-                dprint("IOError dropping item", e)
+            log.debug("IOError dropping item")
+            log.debug(e)
             pass
 
         except Exception, e:
-            dprint("UNEXPECTED Exception ", e, exception=1)
-            dprint("Item ", item)
+            log.error("UNEXPECTED Exception in item %s", item )
+            log.exception(e)
             raise e
-
 
         # decide what to do based on error type
         # e.g. if we are retrying or giving up

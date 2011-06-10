@@ -1,12 +1,13 @@
 # standard modules
 from collections import deque
+import logging
+log = logging.getLogger("melissilogger")
 
 # melissi. modules
 from actions import GetUpdates, CreateDir, MoveDir
 
-if __debug__:
+if log.level <= logging.DEBUG:
     from twisted.internet import reactor
-    from Print import dprint
 
 class Queue(object):
     """ Simple Queue Service.
@@ -24,7 +25,9 @@ class Queue(object):
 
         if __debug__:
             def report():
-                print "Queue size: %s queued, %s waiting" % (len(self.queue), len(self.waiting_list))
+                log.log(5, "Queue size: %s queued, %s waiting" %\
+                        (len(self.queue), len(self.waiting_list))
+                        )
                 reactor.callLater(3, report)
 
             reactor.callWhenRunning(report)
@@ -60,8 +63,7 @@ class Queue(object):
     def wake_up(self, waiting_id):
         if waiting_id in self.waiting_list:
             for item in self.waiting_list[waiting_id]:
-                if __debug__:
-                    dprint("Waking up %s" % item)
+                log.log(5, "Waking up %s" % item)
                 self.put(item)
 
             del(self.waiting_list[waiting_id])

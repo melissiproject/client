@@ -2,9 +2,6 @@
 from storm.locals import *
 
 # melissi modules
-if __debug__:
-    from Print import dprint
-
 SCHEMA_FILE = '''CREATE TABLE file (id TEXT PRIMARY KEY,
                                     filename TEXT,
                                     hash TEXT,

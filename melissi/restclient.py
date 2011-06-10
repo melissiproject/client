@@ -2,6 +2,8 @@
 import urllib
 import json
 import base64
+import logging
+log = logging.getLogger("melissilogger")
 
 # extra modules
 from twisted.internet import reactor
@@ -15,8 +17,6 @@ import twisted.web.error
 import producer
 import receiver
 from actions import *
-if __debug__:
-    from Print import dprint
 
 class AuthenticationFailed(Exception):
     pass
@@ -34,8 +34,7 @@ class RestClient():
         self.offline = True
         self._hub.desktop_tray.set_icon_offline()
         self._hub.desktop_tray.set_connect_menu()
-        if __debug__:
-            dprint("Disconnected")
+        log.info("Disconnected")
 
     def connect(self):
         if self._check_connection():
@@ -82,17 +81,13 @@ class RestClient():
         # code from http://marianoiglesias.com.ar/python/file-\
         # uploading-with-multi-part-encoding-using-twisted/
         def finished(bytes):
-            if __debug__:
-                dprint("Upload DONE: %d" % bytes)
+            log.log(5, "Upload DONE: %d" % bytes)
 
         def progress(current, total):
-            if __debug__:
-                dprint("Upload PROGRESS: %d out of %d" % (current, total))
+            log.log(5, "Upload PROGRESS: %d out of %d" % (current, total))
 
         def failure(error):
-            if __debug__:
-                dprint("Upload ERROR: %s" % error)
-                dprint(error, exception=1)
+            log.log(5, "Upload ERROR: %s" % error)
             return error
 
         def responseDone(data):
@@ -100,10 +95,8 @@ class RestClient():
 
         def responseFail(result):
             """ trap any errors from receiving """
-            print "responseFail failure", result.type
-            if __debug__:
-                dprint(result, exception=1)
-
+            log.error("responseFail failure")
+            log.exception(result)
             return result
 
         # receiver
@@ -182,14 +175,12 @@ class RestClient():
             self.disconnect()
             self._hub.desktop_tray.set_icon_error("Authendication failed")
             # TODO pynotify
-            if __debug__:
-                dprint("Unable to login: Unauthorized message")
+            log.warning("Unable to login: Unauthorized message")
 
         except twisted.internet.error.SSLError:
             self.disconnect()
             self._hub.desktop_tray.set_icon_error("SSLError: You need to change your settings")
-            if __debug__:
-                dprint("SSL Error while connecting")
+            log.warning("SSL Error while connecting")
 
         except Exception, error:
             print error

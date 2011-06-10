@@ -1,5 +1,7 @@
 # standard modules
 import json
+import logging
+log = logging.getLogger("melissilogger")
 
 # extra modules
 from twisted.protocols.basic import LineReceiver
@@ -136,8 +138,7 @@ class FooboxCommandReceiverProtocol(LineReceiver):
             data = json.loads(line)
             cmd = data["command"]
         except (ValueError, KeyError):
-            if __debug__:
-                dprint("COMMANDER: Received invalid json data '%s'" % line)
+            log.debug("COMMANDER: Received invalid json data '%s'" % line)
             self.sendLine("ERROR: Invalid json data")
             self.closeConnection()
             return
@@ -145,8 +146,7 @@ class FooboxCommandReceiverProtocol(LineReceiver):
         try:
             reply = defer.maybeDeferred(self.factory.commands[cmd](self.factory.hub, **data))
         except KeyError:
-            if __debug__:
-                dprint("COMMANDER: Received unknown command")
+            log.debug("COMMANDER: Received unknown command")
             reply = "ERROR: Unknown command"
 
         def send_result(result):

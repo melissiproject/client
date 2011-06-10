@@ -1,11 +1,13 @@
+# stardard modules
+import logging
+log = logging.getLogger("melissilogger")
+
 # extra modules
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 
 # melissi modules
 from actions.updates import GetUpdates, RescanDirectories
-if __debug__:
-    from Print import dprint
 
 class WatchDog(object):
     """
@@ -38,20 +40,17 @@ class WatchDog(object):
         if not len(self._hub.queue.queue) and len(self._hub.queue.waiting_list):
             if self._trigger < self._threshold:
                 self._trigger += 1
-                if __debug__:
-                    dprint("Watchdog: increasing trigger to %s" % self._trigger)
+                log.log(5, "Watchdog: increasing trigger to %s" % self._trigger)
 
             elif self._trigger < self._threshold + 1:
                 # force rescan directories
-                if __debug__:
-                    dprint("Forcing a rescan, due to waiting objects")
+                log.debug("Forcing a rescan, due to waiting objects")
                 self._trigger += 1
                 self._hub.queue.put(RescanDirectories(self._hub))
 
             elif self._trigger < self._threshold + 2:
                 # trigger full update
-                if __debug__:
-                    dprint("Forcing a full update, due to waiting objects")
+                log.debug("Forcing a full update, due to waiting objects")
                 self._trigger += 1
                 self._hub.queue.put(GetUpdates(self._hub, full=True))
 
@@ -60,11 +59,10 @@ class WatchDog(object):
                 #
                 # notify user, to clean database and restart,
                 # something is really wrong
-                if __debug__:
-                    dprint("Failed to solve dependency problem")
+                log.debug("Failed to solve dependency problem")
                 reactor.stop()
 
         else:
             self._trigger = 0
 
-        dprint("Trigger ", self._trigger)
+        log.log(5, "Trigger %s" % self._trigger)

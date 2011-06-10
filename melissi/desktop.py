@@ -3,6 +3,8 @@
 from twisted.internet import gtk2reactor
 gtk2reactor.install()
 from twisted.internet import reactor
+import logging
+log = logging.getLogger("melissilogger")
 
 # standard
 import hashlib
@@ -25,8 +27,6 @@ import util
 import dbschema as db
 import recent_updates_template
 from actions.updates import GetUpdates
-if __debug__:
-    from Print import dprint
 
 WEBKIT_WEB_NAVIGATION_REASON_OTHER = 5
 
@@ -465,9 +465,7 @@ class DesktopTray:
             widget.window.destroy()
 
         def server_response_fail(response):
-            if __debug__:
-                dprint("Error registering")
-
+            log.error("Error registering")
             error = ""
             error_message = json.load(response.value.content)
             for key, e in error_message.iteritems():

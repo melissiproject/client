@@ -2,6 +2,10 @@
 # ModifyFile
 # CreateDir
 
+# standard modules
+import logging
+log = logging.getLogger("melissilogger")
+
 # melissi modules
 import melissi.util
 from melissi.actions import *
@@ -61,7 +65,7 @@ class ModifyFile(WorkerAction):
         self._hash = melissi.util.get_hash(filename=self.fullpath)
 
         if self._hash == self._record.hash:
-            dprint("File not modified, ignoring")
+            log.debug("File not modified, ignoring")
             raise DropItem("File not modified, ignoring")
 
         self._record.hash = self._hash
@@ -132,8 +136,7 @@ class ModifyFile(WorkerAction):
         self._record.id = result['reply']['pk']
 
     def _failure_callback(self, error):
-        if __debug__:
-            dprint("Failure in modify ", error)
+        log.debug("Failure in modify %s" % error)
         raise RetryLater("Failure in modify")
 
 class CreateDir(WorkerAction):
@@ -212,7 +215,6 @@ class CreateDir(WorkerAction):
         self._dms.add(self._record)
 
     def _failure(self, error):
-        if __debug__:
-            dprint("Cell create failed", error)
+        log.debug("Cell create failed %s" % error)
 
         raise RetryLater("Cell create failed [%s]" % self.unique_id)

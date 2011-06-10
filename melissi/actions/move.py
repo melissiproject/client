@@ -2,6 +2,10 @@
 # MoveFile
 # MoveDirectory
 
+# standard modules
+import logging
+log = logging.getLogger("melissilogger")
+
 # melissi modules
 import melissi.util
 from melissi.actions import *
@@ -101,8 +105,7 @@ class MoveFile(MoveObject):
         self._record.revision = len(result['reply']['revisions'])
 
     def _failure(self, error):
-        if __debug__:
-            dprint("File move failed", error.value.content.read())
+        log.debug("File move failed %s" % error.value.content.read())
 
         raise RetryLater
 
@@ -133,7 +136,6 @@ class MoveDir(MoveObject):
         self._update_children()
 
     def _failure(self, error):
-        if __debug__:
-            dprint("Directory move failed", error.value.content.read())
+        log.debug("Directory move failed %s" % error.value.content.read())
 
         raise RetryLater

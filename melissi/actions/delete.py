@@ -6,11 +6,11 @@
 # standard modules
 import shutil
 import os
+import logging
+log = logging.getLogger("melissilogger")
 
 # melissi modules
 from melissi.actions import *
-if __debug__:
-    from melissi.Print import dprint
 
 class DeleteObject(WorkerAction):
     """ lala """
@@ -41,20 +41,18 @@ class DeleteObject(WorkerAction):
             # file not watched, ignoring
             # TODO maybe should look into the queue for pending actions
             # regarding this file
+            log.debug("No record for [%s]" % self.unique_id)
             return
 
         # delete from database
         self._delete_from_db()
-
         # delete from filesystem
         self._delete_from_fs()
-
         # notify server
         return self._post_to_server()
 
     def _failure(self, result):
-        if __debug__:
-            dprint("Failure in delete", result)
+        log.error("Failure in delete %s" % result)
 
         raise RetryLater
 

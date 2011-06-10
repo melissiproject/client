@@ -5,6 +5,8 @@
 
 # standard modules
 from shutil import rmtree
+import logging
+log = logging.getLogger("melissilogger")
 
 # melissi modules
 import melissi.util
@@ -54,8 +56,7 @@ class GetUpdates(WorkerAction):
         self._add_to_queue(GetUpdates(hub=self._hub), when=10)
 
     def _failure(self, result):
-        if __debug__:
-            dprint("Get updates failure", result)
+        log.debug("Get updates failure %s" % result)
 
         raise RetryLater()
 
@@ -421,8 +422,7 @@ class DropletUpdate(WorkerAction):
                 # if path exists, and hash is not the same, then this
                 # is a conflict
                 if os.path.exists(self.fullpath):
-                    if __debug__:
-                        dprint("Conflict on file [%s]" % self.unique_id)
+                    log.debug("Conflict on file [%s]" % self.unique_id)
 
                     resource = self.revisions[-1]['resource']
                     if resource['user'] == self._hub.config_manager.get_username():
@@ -449,9 +449,8 @@ class DropletUpdate(WorkerAction):
                 try:
                     os.unlink(self.fullpath)
                 except OSError, error_message:
-                    if __debug__:
-                        dprint("Error while removing file %s maybe not important" %\
-                               self.fullpath, exception=1)
+                    log.debug("Error while removing file %s maybe not important" %\
+                              self.fullpath, exception=1)
 
                 # remove from db
                 self._dms.remove(self._record)
@@ -530,8 +529,7 @@ class DropletUpdate(WorkerAction):
         # check the hash
         if not melissi.util.get_hash(f=result.content) == self._record.hash:
             # oups
-            if __debug__:
-                dprint("Hashes don't match!")
+            log.debug("Hashes don't match!")
             raise ValueError("Hashes don't match!")
 
         # set write permissions first
@@ -557,8 +555,8 @@ class DropletUpdate(WorkerAction):
         self._action_taken = True
 
     def _failure(self, result):
-        if __debug__:
-            dprint("We cannot fetch the file", result, exception=1)
+        log.error("We cannot fetch the file")
+        log.exception(result)
 
         # self._tmp_file.close()
         # try:

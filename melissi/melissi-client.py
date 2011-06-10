@@ -16,12 +16,13 @@ import watchdog
 import commander
 import queue
 import twisted
+import logging
 
 # extra modules
 # reactor must install last
 from twisted.internet import reactor
 
-class Hub():
+class Hub(object):
     def __init__(self):
         self.database_manager = None
         self.config_manager = None
@@ -31,6 +32,28 @@ class Hub():
         self.queue = None
         self.rest_client = None
         self.watch_dog = None
+
+
+def setup_logging(level):
+    """
+    Logging levels:
+    5 FULLDEBUG
+    10 DEBUG
+    20 INFO
+    >=30 WARNING, ERRORS
+
+    Example Format of Logs
+    ERROR testlogger/testlogger.py:30       f                | Something awful happened
+    """
+    # add level 5, fulldebug
+    logging.addLevelName(5, "FDEBUG")
+
+    x = logging.getLogger("melissilogger")
+    x.setLevel(level)
+    h = logging.StreamHandler()
+    f = logging.Formatter("\t%(levelname)s\t %(module)s/%(filename)s:%(lineno)d \t\t%(funcName)s\t\t | %(message)s")
+    h.setFormatter(f)
+    x.addHandler(h)
 
 def main():
     # Parse options
@@ -44,11 +67,28 @@ def main():
                       action="store_true",
                       default=False
                       )
+    parser.add_option("-v", "--verbosity",
+                      help="Verbose debug messages. Use multiple for more verbose messages",
+                      action="count",
+                      dest="verbosity",
+                      default=0)
+
     (options, _) = parser.parse_args()
+
+    # parse verbosity level and set logging
+    if options.verbosity == 0:
+        setup_logging(20)
+    elif options.verbosity == 1:
+        setup_logging(10)
+    elif options.verbosity >= 2:
+        setup_logging(5)
+    elif options.quiet == True:
+        setup_logging(30)
 
     hub = Hub()
     hub.queue = queue.Queue(hub)
-    hub.config_manager = config.ConfigManager(hub, os.path.expanduser(options.config_file))
+    hub.config_manager = config.ConfigManager(hub,
+                                              os.path.expanduser(options.config_file))
     hub.database_manager = database.DatabaseManager(hub, hub.config_manager.get_database())
     hub.notify_manager = notifier.NotifyManager(hub)
     hub.desktop_tray = desktop.DesktopTray(hub,

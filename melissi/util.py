@@ -8,13 +8,11 @@ import pynotify
 import time
 from glib import GError
 from datetime import datetime, timedelta
+import logging
+log = logging.getLogger("melissilogger")
 
 # extra modules
 from twisted.web import client
-
-# melissi modules
-if __debug__:
-    from Print import dprint
 
 WORKER_RECALL = 0.1
 gravatars = {}
@@ -118,50 +116,50 @@ def create_path(path):
             pass
         else: raise
 
-def check_keys_in_data(keys, data, exact_data=True, set_default=True):
-    """Check if keys in data exist, set default values, return data.
+# def check_keys_in_data(keys, data, exact_data=True, set_default=True):
+#     """Check if keys in data exist, set default values, return data.
 
-    keys is a list of dictionaries. Each dictionary in the list contains at
-    least 'name'. 'name' is the key to look for in 'data'. If 'default' exists
-    is the default value to be set to the 'key' if the key is missing. If
-    'default' is missing then 'key' is considered mandatory and if not found
-    a KeyError is raised.
+#     keys is a list of dictionaries. Each dictionary in the list contains at
+#     least 'name'. 'name' is the key to look for in 'data'. If 'default' exists
+#     is the default value to be set to the 'key' if the key is missing. If
+#     'default' is missing then 'key' is considered mandatory and if not found
+#     a KeyError is raised.
 
-    Arguments:
-    - `keys`: a list of dictionaries containing the keys to look for.
-    - `data`: the data to check for the keys
-    """
-    for key in keys:
-        if data.has_key(key['name']):
-            pass
-        else:
-            if not key.has_key('default'):
-                # the key is mandatory, raise KeyError
-                raise KeyError("Missing key '%s'" % key['name'])
-            else:
-                # key is optional
-                if set_default:
-                    #set default value
-                    data[key['name']] = key['default']
+#     Arguments:
+#     - `keys`: a list of dictionaries containing the keys to look for.
+#     - `data`: the data to check for the keys
+#     """
+#     for key in keys:
+#         if data.has_key(key['name']):
+#             pass
+#         else:
+#             if not key.has_key('default'):
+#                 # the key is mandatory, raise KeyError
+#                 raise KeyError("Missing key '%s'" % key['name'])
+#             else:
+#                 # key is optional
+#                 if set_default:
+#                     #set default value
+#                     data[key['name']] = key['default']
 
-        # check key type
-        if key.has_key('type'):
-            if not isinstance(data[key['name']], key['type']):
-                raise KeyError("Invalid data type for key '%s'"
-                               % key['name'])
+#         # check key type
+#         if key.has_key('type'):
+#             if not isinstance(data[key['name']], key['type']):
+#                 raise KeyError("Invalid data type for key '%s'"
+#                                % key['name'])
 
 
-    # now if we have more keys in data than in keys then
-    # the client submitted more data. Reject it, it may be harmful
-    if exact_data and len(keys) != len(data.keys()):
-        if __debug__:
-            for key in keys:
-                if data.has_key(key['name']):
-                    del(data[key['name']])
-            dprint("Conflicting key", data)
-        raise KeyError("More data injected")
+#     # now if we have more keys in data than in keys then
+#     # the client submitted more data. Reject it, it may be harmful
+#     if exact_data and len(keys) != len(data.keys()):
+#         if __debug__:
+#             for key in keys:
+#                 if data.has_key(key['name']):
+#                     del(data[key['name']])
+#             dprint("Conflicting key", data)
+#         raise KeyError("More data injected")
 
-    return data
+#     return data
 
 
 def urlencode(dic):
@@ -180,8 +178,7 @@ def parse_datetime(dt_string):
     try:
         return datetime.strptime(dt_string, '%Y-%m-%d %H:%M:%S')
     except:
-        if __debug__:
-            dprint("Error parsing date string", dt_string, exception=1)
+        log.log(5, "Error parsing date string %s" % dt_string)
         return '1970-1-1 00:00:00'
 
 def get_localtime(dt):

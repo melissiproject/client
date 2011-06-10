@@ -16,8 +16,6 @@ import twisted.internet.defer as defer
 # melissi modules
 import melissi.dbschema as db
 import melissi.util
-if __debug__:
-    from melissi.Print import dprint
 
 class NotImplementedError(Exception):
     """

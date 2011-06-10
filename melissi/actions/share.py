@@ -1,11 +1,13 @@
 # Contains
 # Share
 
+# standard modules
+import logging
+log = logging.getLogger("melissilogger")
+
 # melissi modules
 from melissi.actions import *
 
-if __debug__:
-    from melissi.Print import dprint
 
 class Share(WorkerAction):
     def __init__(self, hub, filename, watchpath, mode, user):
@@ -45,7 +47,6 @@ class Share(WorkerAction):
         d.addErrback(self._failure)
 
     def _failure(self, error):
-        if __debug__:
-            dprint("Error setting share: ", error)
+        log.debug("Error setting share: %s" % error)
 
         return DropItem("Failed to set share")
