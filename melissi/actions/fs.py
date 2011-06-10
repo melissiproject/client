@@ -11,7 +11,7 @@ class RescanDirectories(WorkerAction):
 
     @property
     def unique_id(self):
-        return self._directories or "all"
+        return ' '.join(self._directories) or "all"
 
     def _execute(self):
         self._hub.notify_manager.rescan_directories(self._directories)
