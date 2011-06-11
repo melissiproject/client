@@ -52,7 +52,7 @@ class HandleEvents(pyinotify.ProcessEvent):
 
     def process_IN_CREATE(self, event):
         # we *do* have to do that although we use rec=True
-        log.log(5, "IN_CREATE [%s]" % event)
+        log.log(4, "IN_CREATE [%s]" % event)
         if event.dir:
             try:
                 path = unicode(event.pathname)
@@ -69,22 +69,19 @@ class HandleEvents(pyinotify.ProcessEvent):
             self.manager.add_watch(path)
 
     def process_IN_OPEN(self, event):
-        log.log(5, "IN_OPEN [%s]" % event)
-        if self.checkFile(event) and event.mask != 0x200:
-            # add to dictionary
-            self.manager.add_to_file_list(event)
+        log.log(4, "IN_OPEN [%s]" % event)
+        self.manager.add_to_file_list(event)
 
     def process_IN_CLOSE_NOWRITE(self, event):
-        log.log(5, "IN_CLOSE_NOWRITE [%s]" % event)
-        if self.checkFile(event) and event.mask != 0x200:
-            self.manager.remove_from_file_list(event)
+        log.log(4, "IN_CLOSE_NOWRITE [%s]" % event)
+        self.manager.remove_from_file_list(event)
 
     def process_IN_CLOSE_WRITE(self, event):
-        log.log(5, "IN_CLOSE_WRITE [%s]" % event)
-        if self.checkFile(event):
-            # remove from dictionary
-            # self.manager.remove_from_file_list(event)
+        log.log(4, "IN_CLOSE_WRITE [%s]" % event)
+        # remove from dictionary
+        self.manager.remove_from_file_list(event)
 
+        if self.checkFile(event):
             try:
                 path = unicode(event.pathname)
             except UnicodeDecodeError, error_message:
@@ -99,8 +96,11 @@ class HandleEvents(pyinotify.ProcessEvent):
                                       )
 
     def process_IN_DELETE(self, event):
-        log.log(5, "IN_DELETE [%s]" % event)
+        log.log(4, "IN_DELETE [%s]" % event)
         # TODO when delete dir what happens with the files?
+        # remove from dictionary
+        self.manager.remove_from_file_list(event)
+
         try:
             path = unicode(event.pathname)
         except UnicodeDecodeError, error_message:
@@ -120,7 +120,10 @@ class HandleEvents(pyinotify.ProcessEvent):
                                       )
 
     def process_IN_MOVED_TO(self, event):
-        log.log(5, "IN_MOVED_TO [%s]" % event)
+        log.log(4, "IN_MOVED_TO [%s]" % event)
+        # remove from dictionary
+        self.manager.remove_from_file_list(event)
+
         try:
             path = unicode(event.pathname)
         except UnicodeDecodeError, error_message:
@@ -174,15 +177,15 @@ class HandleEvents(pyinotify.ProcessEvent):
                                       pathjoin(watched_dir, filename)
                                       )
 
-    # # for debuging proposes only
-    # def process_default(self, event):
-    #     print event
+    # for debuging proposes only
+    def process_default(self, event):
+        log.log(4, "NOTIFIER %s" % event)
 
 class NotifyManager():
     def __init__(self, hub):
         self.hub = hub
         self._dms = self.hub.database_manager.store
-        self.open_files_list = {}
+        self.open_files_list = []
         self._inotify_wm = pyinotify.WatchManager()
         self._processor = HandleEvents(self)
         self._inotify_notifier = pyinotify.Notifier(self._inotify_wm, self._processor)
@@ -294,26 +297,22 @@ class NotifyManager():
                                           fullpath)
 
     def add_to_queue(self, action, pathname):
+        # print self.open_files_list
+        print '**', self.open_files_list
         if pathname not in self.open_files_list:
             self.hub.queue.put(action)
 
     def add_to_file_list(self, event):
-        #if self.checkFile(event):
-            self.open_files_list[event.pathname] = True
+        self.open_files_list.append(event.pathname)
 
     def remove_from_file_list(self, event):
         #if self.checkFile(event):
-            print "** removing", event.pathname
-            print self.open_files_list
-            try:
-                del self.open_files_list[event.pathname]
-            except KeyError:
-                # print "error, not in list"
-                # print event.pathname, self.open_files_list
-                pass
-
-    #         print self.open_files_list
-
+        try:
+            self.open_files_list.remove(event.pathname)
+        except ValueError:
+            # print "error, not in list"
+            # print event.pathname, self.open_files_list
+            pass
 
     def _hook_inotify_to_twisted(self, wm, notifier):
         """This will hook inotify to twisted."""

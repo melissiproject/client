@@ -46,12 +46,13 @@ def setup_logging(level):
     ERROR testlogger/testlogger.py:30       f                | Something awful happened
     """
     # add level 5, fulldebug
+    logging.addLevelName(4, "EDEBUG")
     logging.addLevelName(5, "FDEBUG")
 
     x = logging.getLogger("melissilogger")
     x.setLevel(level)
     h = logging.StreamHandler()
-    f = logging.Formatter(" %(levelname)-10s %(module)-10s %(filename)s:%(lineno)d \t%(funcName)-20s\t | %(message)s")
+    f = logging.Formatter(" %(levelname)-10s %(module)-10s %(filename)s:%(lineno)d \t%(funcName)-30s\t | %(message)s")
     h.setFormatter(f)
     x.addHandler(h)
 
@@ -80,8 +81,10 @@ def main():
         setup_logging(20)
     elif options.verbosity == 1:
         setup_logging(10)
-    elif options.verbosity >= 2:
+    elif options.verbosity == 2:
         setup_logging(5)
+    elif options.verbosity >= 3:
+        setup_logging(4)
     elif options.quiet == True:
         setup_logging(30)
 

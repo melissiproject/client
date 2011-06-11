@@ -28,6 +28,7 @@ class Queue(object):
                 log.log(5, "Queue size: %s queued, %s waiting" %\
                         (len(self.queue), len(self.waiting_list))
                         )
+                log.log(5, "Open file list: %s" % ' '.join(self._hub.notify_manager.open_files_list))
                 reactor.callLater(3, report)
 
             reactor.callWhenRunning(report)
