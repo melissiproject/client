@@ -270,7 +270,8 @@ class CellUpdate(WorkerAction):
         self._action_taken = True
 
 class DropletUpdate(WorkerAction):
-    def __init__(self, hub, pk, name, cell, owner, created, updated, deleted, revisions):
+    def __init__(self, hub, pk, name, cell, owner, created, updated,
+                 content_md5, patch_md5, deleted, revisions):
         super(DropletUpdate, self).__init__(hub)
 
         self.pk = pk
@@ -280,6 +281,8 @@ class DropletUpdate(WorkerAction):
         self.deleted = deleted
         self.created = melissi.util.parse_datetime(created)
         self.updated = melissi.util.parse_datetime(updated)
+        self.content_md5 = content_md5
+        self.patch_md5 = patch_md5
         self.revisions = revisions
 
         self._new = True
@@ -299,7 +302,7 @@ class DropletUpdate(WorkerAction):
 
     def _create_record(self):
         record = db.File()
-        record.hash = self.revisions[-1]['content_md5']
+        record.hash = self.content_md5
         record.revision = len(self.revisions)
         record.id = self.pk
         record.size = None
@@ -475,7 +478,7 @@ class DropletUpdate(WorkerAction):
 
             # check if file content changed
             # TODO be aware of race conditions here
-            if self.revisions[-1]['content_md5'] != self._record.hash and \
+            if self.content_md5 != self._record.hash and \
                len(self.revisions) > self._record.revision:
                 # yeah there is some new content, let's fetch this
                 # return self._get_patch()
@@ -502,11 +505,11 @@ class DropletUpdate(WorkerAction):
 
     def _get_patch_success(self, result):
         # try patching
-        melissi.util.patch_file(result, self.fullpath, self.revisions[-1]['content_md5'])
+        melissi.util.patch_file(result, self.fullpath, self.content_md5)
 
         # ok same changes in db
         self._record.signature = self._generate_signature()
-        self._record.hash = self.revisions[-1]['content_md5']
+        self._record.hash = self.content_md5
         self._record.modified = self.updated
         self._record.revision = len(self.revisions)
 
@@ -525,7 +528,7 @@ class DropletUpdate(WorkerAction):
 
     def _get_file_success(self, result):
         # ok same changes in db
-        self._record.hash = self.revisions[-1]['content_md5']
+        self._record.hash = self.content_md5
         # check the hash
         if not melissi.util.get_hash(f=result.content) == self._record.hash:
             # oups
