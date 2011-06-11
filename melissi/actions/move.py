@@ -63,6 +63,20 @@ class MoveObject(WorkerAction):
         if not self._record:
             raise DropItem("We already did the move")
 
+        # check if we are overwriting another file or folder
+        # if yes, we must first delete that
+        # execute instantly, don't go to queue
+        self._replace_record =  self._fetch_file_record(File__filename=self.filename,
+                                                        WatchPath__path=self.watchpath)
+        if self._replace_record:
+            # delete ids
+            if self._replace_record.directory:
+                action = DeleteObjectIdCell(self._hub, self._replace_record.id)
+            else:
+                action = DeleteObjectIdDroplet(self._hub, self._replace_record.id)
+
+            action()
+
         self._parent = self._get_parent()
 
         uri = self._get_uri()
