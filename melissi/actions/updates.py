@@ -61,10 +61,10 @@ class GetUpdates(WorkerAction):
         raise RetryLater()
 
 class CellUpdate(WorkerAction):
-    def __init__(self, hub, pk, name, pid, revisions, owner, created, updated, deleted):
+    def __init__(self, hub, id, name, pid, revisions, owner, created, updated, deleted):
         super(CellUpdate, self).__init__(hub)
 
-        self.pk = pk
+        self.id = id
         self.name = name
         self.parent = pid
         self.owner = owner
@@ -77,12 +77,12 @@ class CellUpdate(WorkerAction):
 
     @property
     def unique_id(self):
-        return self.pk
+        return self.id
 
     def exists(self):
         # return record if item exists in the database
         # else return False
-        return self._fetch_file_record(File__id=self.pk)
+        return self._fetch_file_record(File__id=self.id, File__directory=True)
 
     def is_root(self):
         if not self.parent:
@@ -93,14 +93,16 @@ class CellUpdate(WorkerAction):
     def parent_exists(self):
         # return True if parent exists
         if not self.is_root():
-            return self._fetch_file_record(File__id=self.parent)
+            return self._fetch_file_record(File__id=self.parent,
+                                           File__directory=True
+                                           )
 
         else:
             return False
 
     def _create_record(self):
         record = db.File()
-        record.id = self.pk
+        record.id = self.id
         record.hash = None
         record.revision = None
         record.size = None
@@ -123,7 +125,7 @@ class CellUpdate(WorkerAction):
         # and if yes, do nothing
         if self._dms.find(db.LogEntry,
                           db.LogEntry.timestamp == self.updated,
-                          db.LogEntry.file_id == self.pk
+                          db.LogEntry.file_id == self.id
                           ).one():
             return
 
@@ -133,7 +135,7 @@ class CellUpdate(WorkerAction):
         logentry.last_name = self.owner['last_name']
         logentry.username = self.owner['username']
         logentry.email = self.owner['email']
-        logentry.file = self.pk
+        logentry.file = self.id
         if self.deleted:
             verb = u'deleted'
         elif self._new:
@@ -175,7 +177,7 @@ class CellUpdate(WorkerAction):
             if self.is_root():
                 # new repository
                 watchpath = db.WatchPath()
-                watchpath.server_id = self.pk
+                watchpath.server_id = self.id
                 watchpath.path = pathjoin(
                     os.path.abspath(self._hub.config_manager.config.get('main', 'new-root-path')),
                     self.name
@@ -270,41 +272,43 @@ class CellUpdate(WorkerAction):
         self._action_taken = True
 
 class DropletUpdate(WorkerAction):
-    def __init__(self, hub, pk, name, cell, owner, created, updated,
-                 content_md5, patch_md5, deleted, revisions):
+    def __init__(self, hub, id, name, cell, owner, created, updated,
+                 content_sha256, patch_sha256, deleted, revisions):
         super(DropletUpdate, self).__init__(hub)
 
-        self.pk = pk
+        self.id = id
         self.name = name
         self.cell = cell
         self.owner = owner
         self.deleted = deleted
         self.created = melissi.util.parse_datetime(created)
         self.updated = melissi.util.parse_datetime(updated)
-        self.content_md5 = content_md5
-        self.patch_md5 = patch_md5
+        self.content_sha256 = content_sha256
+        self.patch_sha256 = patch_sha256
         self.revisions = revisions
 
         self._new = True
 
     @property
     def unique_id(self):
-        return self.pk
+        return self.id
 
     def exists(self):
         # return record if item exists in the database
         # else return False
-        return self._fetch_file_record(File__id=self.pk)
+        return self._fetch_file_record(File__id=self.id, File__directory=False)
 
     def cell_exists(self):
         # return True if parent exists
-        return self._fetch_file_record(File__id=self.cell['pk'])
+        return self._fetch_file_record(File__id=self.cell['id'],
+                                       File__directory=True,
+                                       )
 
     def _create_record(self):
         record = db.File()
-        record.hash = self.content_md5
+        record.hash = self.content_sha256
         record.revision = self.revisions
-        record.id = self.pk
+        record.id = self.id
         record.size = None
         record.directory = False
         record.modified = self.updated
@@ -339,7 +343,7 @@ class DropletUpdate(WorkerAction):
         # and if yes, do nothing
         if self._dms.find(db.LogEntry,
                           db.LogEntry.timestamp == self.updated,
-                          db.LogEntry.file_id == self.pk
+                          db.LogEntry.file_id == self.id
                           ).one():
             return
 
@@ -349,7 +353,7 @@ class DropletUpdate(WorkerAction):
         logentry.last_name = self.owner['last_name']
         logentry.username = self.owner['username']
         logentry.email = self.owner['email']
-        logentry.file = self.pk
+        logentry.file = self.id
 
         if self.deleted:
             verb = u'deleted'
@@ -403,7 +407,7 @@ class DropletUpdate(WorkerAction):
                 return True
             # if cell does not exist, add to queue
             elif not self.cell_exists():
-                raise WaitItem(self.cell['pk'])
+                raise WaitItem(self.cell['id'])
 
             self._record = self._create_record()
             cell = self.cell_exists()
@@ -473,12 +477,13 @@ class DropletUpdate(WorkerAction):
 
                 oldpath = pathjoin(oldwatchpath, oldfilename)
 
+                print "hey"
                 # move file
                 shutil.move(oldpath, self.fullpath)
 
             # check if file content changed
             # TODO be aware of race conditions here
-            if self.content_md5 != self._record.hash and \
+            if self.content_sha256 != self._record.hash and \
                self.revisions > self._record.revision:
                 # yeah there is some new content, let's fetch this
                 # return self._get_patch()
@@ -487,17 +492,19 @@ class DropletUpdate(WorkerAction):
             raise DropItem("Do nothing")
 
     def _get_parent(self):
-        parent = self._fetch_file_record(File__id=self.cell['pk'])
+        parent = self._fetch_file_record(File__id=self.cell['id'],
+                                         File__directory=True,
+                                         )
 
         if not parent:
-            raise WaitItem(self.cell['pk'])
+            raise WaitItem(self.cell['id'])
         else:
             return parent
 
     def _get_file(self):
         uri = '%(server)s/api/droplet/%(droplet_id)s/revision/latest/content/' %\
               {'server': self._hub.config_manager.get_server(),
-               'droplet_id': self.pk}
+               'droplet_id': self.id}
         d = self._hub.rest_client.get(str(uri))
         d.addCallback(self._get_file_success)
         d.addErrback(self._failure)
@@ -505,11 +512,11 @@ class DropletUpdate(WorkerAction):
 
     def _get_patch_success(self, result):
         # try patching
-        melissi.util.patch_file(result, self.fullpath, self.content_md5)
+        melissi.util.patch_file(result, self.fullpath, self.content_sha256)
 
         # ok same changes in db
         self._record.signature = self._generate_signature()
-        self._record.hash = self.content_md5
+        self._record.hash = self.content_sha256
         self._record.modified = self.updated
         self._record.revision = self.revisions
 
@@ -519,7 +526,7 @@ class DropletUpdate(WorkerAction):
     def _get_patch(self):
         uri = '%(server)s/api/droplet/%(droplet_id)s/revision/latest/patch/' %\
               {'server': self._hub.config_manager.get_server(),
-               'droplet_id': self.pk}
+               'droplet_id': self.id}
         d = self._hub.rest_client.get(str(uri))
         d.addCallback(self._get_patch_success)
         d.addErrback(self._failure)
@@ -528,7 +535,7 @@ class DropletUpdate(WorkerAction):
 
     def _get_file_success(self, result):
         # ok same changes in db
-        self._record.hash = self.content_md5
+        self._record.hash = self.content_sha256
         # check the hash
         if not melissi.util.get_hash(f=result.content) == self._record.hash:
             # oups
