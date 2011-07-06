@@ -163,9 +163,6 @@ class DeleteObjectId(WorkerAction):
     def unique_id(self):
         return self._objectid
 
-    def exists(self):
-        return self._fetch_file_record(File__id=self._objectid)
-
     def _execute(self):
         self._record = self.exists()
         if not self._record:
@@ -193,6 +190,12 @@ class DeleteObjectIdCell(DeleteObjectId):
         # delete self
         self._dms.remove(self._record)
 
+
+    def exists(self):
+        return self._fetch_file_record(File__id=self._objectid,
+                                       File__directory=True
+                                       )
+
     def _post_to_server(self):
         uri = '%s/api/cell/%s/' % (self._hub.config_manager.get_server(),
                                self._record.id)
@@ -206,6 +209,11 @@ class DeleteObjectIdDroplet(DeleteObjectId):
     def _delete_from_db(self):
         # delete self
         self._dms.remove(self._record)
+
+    def exists(self):
+        return self._fetch_file_record(File__id=self._objectid,
+                                       File__directory=False
+                                       )
 
     def _post_to_server(self):
         uri = '%s/api/droplet/%s/' % (self._hub.config_manager.get_server(),
