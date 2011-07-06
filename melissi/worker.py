@@ -66,7 +66,7 @@ class Worker(object):
             failure.raiseException()
 
         except WaitItem, e:
-            log.debug("Item %s waits for %s" % (item.pk, e.id))
+            log.debug("Item %s waits for %s" % (item.id, e.id))
             self._hub.queue.put_into_waiting_list(e.id, item)
 
         except RetryLater, e:
