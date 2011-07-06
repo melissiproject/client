@@ -79,7 +79,7 @@ class ModifyFile(WorkerAction):
                 self._file_handler = open(self.fullpath)
             except (OSError, IOError) as error_message:
                 raise RetryLater("Error opening file")
-            return self._put_revision()
+            return self._post_revision()
 
         else:
             patch = False
@@ -88,52 +88,37 @@ class ModifyFile(WorkerAction):
             except (OSError, IOError) as error_message:
                 raise RetryLater("Error opening file")
 
-            if not self._record.id:
-                return self._post_droplet()
-            else:
-                return self._put_revision()
+            return self._post_droplet()
 
     def _post_droplet(self):
         uri = '%s/api/droplet/' % self._hub.config_manager.get_server()
-        data = {'name': os.path.basename(self.filename), 'cell': self._parent.id}
-        d = self._hub.rest_client.post(str(uri), data=data)
-        d.addCallback(self._success_droplet_callback)
+        data = { 'name': os.path.basename(self.filename),
+                 'cell': self._parent.id,
+                 'content_sha256': self._record.hash,
+                 }
+        d = self._hub.rest_client.post(str(uri), data=data, file_handle=self._file_handler)
+        d.addCallback(self._success_callback)
         d.addErrback(self._failure_callback)
         return d
 
     def _post_revision(self):
         uri = '%s/api/droplet/%s/revision/' % (self._hub.config_manager.get_server(), self._record.id)
-        data = {'md5': self._record.hash, 'number': self._record.revision}
-        d = self._hub.rest_client.post(str(uri), data=data, file_handle=self._file_handler)
-        d.addCallback(self._success_revision_callback)
-        d.addErrback(self._failure_callback)
-        return d
-
-    def _put_revision(self):
-        uri = '%s/api/droplet/%s/revision/' % (self._hub.config_manager.get_server(), self._record.id)
-        data = {'md5': self._record.hash,
+        data = {'content_sha256': self._record.hash,
                 'number': self._record.revision + 1,
                 'patch': False
                 }
         d = self._hub.rest_client.post(str(uri), data=data, file_handle=self._file_handler)
-        d.addCallback(self._success_revision_callback)
+        d.addCallback(self._success_callback)
         d.addErrback(self._failure_callback)
         return d
 
-    def _success_droplet_callback(self, result):
-        result = json.load(result.content)
-        self._record.id = result['reply']['pk']
-        self._record.revision = result['reply']['revisions']
-
-        return self._post_revision()
-
-    def _success_revision_callback(self, result):
+    def _success_callback(self, result):
         result = json.load(result.content)
         # self._record.signature = util.get_signature(self.fullpath)
         self._record.signature = None
         self._record.revision = result['reply']['revisions']
         self._record.modified = melissi.util.parse_datetime(result['reply']['updated'])
-        self._record.id = result['reply']['pk']
+        self._record.id = result['reply']['id']
 
     def _failure_callback(self, error):
         log.debug("Failure in modify %s" % error)
@@ -207,7 +192,7 @@ class CreateDir(WorkerAction):
 
     def _success(self, result):
         result = json.load(result.content)
-        self._record.id = result['reply']['pk']
+        self._record.id = result['reply']['id']
         self._record.revision = result['reply']['revisions']
         self._record.modified = melissi.util.parse_datetime(result['reply']['updated'])
 
