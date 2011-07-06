@@ -36,13 +36,10 @@ class Share(WorkerAction):
             raise DropItem("You cannot share a folder I don't follow")
 
         data = {'mode': self.mode,
-                'user': self.user
                 }
-        uri = '%s/api/cell/%s/share/' % (self._hub.config_manager.get_server(),
-                                         self._record.id)
-        # uri = '%s/api/cell/%s/share/' % ("http://localhost:8888",
-        #                         self._record.id)
-
+        uri = '%s/api/cell/%s/share/%s/' % (self._hub.config_manager.get_server(),
+                                            self._record.id,
+                                            self.user)
         d = self._hub.rest_client.post(str(uri), data=data)
         d.addErrback(self._failure)
 

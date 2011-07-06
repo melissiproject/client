@@ -15,7 +15,7 @@ from twisted.internet import reactor
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import ClientFactory
 
-modes = ['wara', 'wnra']
+modes = {'wara':'1', 'wnra':'2'}
 command_list = []
 
 class MelisiCommanderProtocol(LineReceiver):
@@ -54,14 +54,14 @@ def addshare(args):
         sys.exit(1)
 
     # check if proper mode
-    if not (args[1] in modes):
+    if not (args[1] in modes.keys()):
         usage()
         sys.exit(1)
 
     cmd = {}
     cmd["command"] = "SHARE"
     cmd["path"] = os.path.abspath(args[0])
-    cmd["mode"] = args[1]
+    cmd["mode"] = modes[args[1]]
     cmd["user"] = args[2]
 
 
