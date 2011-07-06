@@ -27,6 +27,7 @@ import util
 import dbschema as db
 import recent_updates_template
 from actions.updates import GetUpdates
+from actions.fs import RescanDirectories
 
 WEBKIT_WEB_NAVIGATION_REASON_OTHER = 5
 
