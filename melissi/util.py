@@ -34,7 +34,7 @@ def get_hash(filename=None, f=None):
             raise e
 
     if f:
-        hash_function = hashlib.md5()
+        hash_function = hashlib.sha256()
         while True:
             chunk = f.read(4096)
             if chunk == '': break
