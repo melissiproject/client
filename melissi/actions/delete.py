@@ -169,7 +169,7 @@ class DeleteObjectId(WorkerAction):
     def _execute(self):
         self._record = self.exists()
         if not self._record:
-            log.debug("No record with ib [%s]" % self.unique_id)
+            log.debug("No record with id [%s]" % self.unique_id)
             return
 
         self._delete_from_db()
