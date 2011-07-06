@@ -2,7 +2,7 @@
 from storm.locals import *
 
 # melissi modules
-SCHEMA_FILE = '''CREATE TABLE file (id INTEGER PRIMARY KEY,
+SCHEMA_FILE = '''CREATE TABLE file (id INTEGER,
                                     filename TEXT,
                                     hash TEXT,
                                     revision INTERGER,
@@ -10,7 +10,8 @@ SCHEMA_FILE = '''CREATE TABLE file (id INTEGER PRIMARY KEY,
                                     modified DATETIME,
                                     directory BOOL,
                                     watchpath_id INTEGER,
-                                    signature BLOB
+                                    signature BLOB,
+                                    PRIMARY KEy (id, directory)
                                     );'''
 SCHEMA_WATCHPATH = '''CREATE TABLE watchpath (id INTEGER PRIMARY KEY,
                                               path TEXT
@@ -35,6 +36,7 @@ SCHEMA_VERSION = 1
 
 class File(object):
     __storm_table__ = "file"
+    __storm_primary = "id", "directory"
     id = Int(primary=True)
     filename = Unicode()
     hash = Unicode()
