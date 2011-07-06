@@ -110,7 +110,7 @@ class MoveFile(MoveObject):
 
     def _success(self, result):
         result = json.load(result.content)
-        self._record.parent_id = result['reply']['cell']['pk']
+        self._record.parent_id = result['reply']['cell']['id']
         self._record.watchpath = self._parent.watchpath
         self._record.filename = pathjoin(self._parent.filename,
                                          result['reply']['name']
@@ -139,14 +139,14 @@ class MoveDir(MoveObject):
 
     def _success(self, result):
         result = json.load(result.content)
-        self._record.parent_id = result['reply']['roots'][0]['pk']
+        self._record.parent_id = result['reply']['pid']
         self._record.watchpath = self._parent.watchpath
         self._record.filename = pathjoin(self._parent.filename,
                                          result['reply']['name']
                                          )
         self._record.modified = melissi.util.parse_datetime(result['reply']['updated'])
         self._record.revision = result['reply']['revisions']
-        self._record.id = result['reply']['pk']
+        self._record.id = result['reply']['id']
         self._update_children()
 
     def _failure(self, error):
