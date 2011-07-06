@@ -298,7 +298,6 @@ class NotifyManager():
 
     def add_to_queue(self, action, pathname):
         # print self.open_files_list
-        print '**', self.open_files_list
         if pathname not in self.open_files_list:
             self.hub.queue.put(action)
 
