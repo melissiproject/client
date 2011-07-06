@@ -2,11 +2,11 @@
 from storm.locals import *
 
 # melissi modules
-SCHEMA_FILE = '''CREATE TABLE file (id TEXT PRIMARY KEY,
+SCHEMA_FILE = '''CREATE TABLE file (id INTEGER PRIMARY KEY,
                                     filename TEXT,
                                     hash TEXT,
                                     revision INTERGER,
-                                    parent_id TEXT,
+                                    parent_id INTERGER,
                                     modified DATETIME,
                                     directory BOOL,
                                     watchpath_id INTEGER,
@@ -28,18 +28,18 @@ SCHEMA_LOG = '''CREATE TABLE log (id INTEGER PRIMARY KEY,
                                   email TEXT,
                                   action TEXT,
                                   extra TEXT,
-                                  file_id TEXT
+                                  file_id INTEGER
                                   );'''
 
 SCHEMA_VERSION = 1
 
 class File(object):
     __storm_table__ = "file"
-    id = Unicode(primary=True)
+    id = Int(primary=True)
     filename = Unicode()
     hash = Unicode()
     revision = Int()
-    parent_id = Unicode()
+    parent_id = Int()
     parent = Reference(parent_id, id)
     modified = DateTime()
     directory = Bool(default=False)
@@ -71,7 +71,7 @@ class LogEntry(object):
     email = Unicode()
     action = Unicode()
     extra = Unicode()
-    file_id = Unicode()
+    file_id = Int()
     file = Reference(file_id, File.id)
 
 File.watchpath = Reference(File.watchpath_id, WatchPath.id)
