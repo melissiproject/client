@@ -100,7 +100,7 @@ class MoveFile(MoveObject):
     def _get_data(self):
         return {'name'  : os.path.basename(self.filename),
                 'cell'  : self._parent.id,
-                'number': self._record.revision
+                'number': self._record.revision + 1
                 }
 
     def _get_uri(self):
@@ -116,7 +116,7 @@ class MoveFile(MoveObject):
                                          result['reply']['name']
                                          )
         self._record.modified = melissi.util.parse_datetime(result['reply']['updated'])
-        self._record.revision = len(result['reply']['revisions'])
+        self._record.revision = result['reply']['revisions']
 
     def _failure(self, error):
         log.debug("File move failed %s" % error.value.content.read())
@@ -130,7 +130,7 @@ class MoveDir(MoveObject):
     def _get_data(self):
         return {'name'  : os.path.basename(self.filename),
                 'parent': self._parent.id,
-                'number': self._record.revision
+                'number': self._record.revision + 1
                 }
 
     def _get_uri(self):
@@ -145,7 +145,7 @@ class MoveDir(MoveObject):
                                          result['reply']['name']
                                          )
         self._record.modified = melissi.util.parse_datetime(result['reply']['updated'])
-        self._record.revision = len(result['reply']['revisions'])
+        self._record.revision = result['reply']['revisions']
         self._record.id = result['reply']['pk']
         self._update_children()
 
