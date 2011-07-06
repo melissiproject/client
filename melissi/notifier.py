@@ -68,18 +68,18 @@ class HandleEvents(pyinotify.ProcessEvent):
                                       )
             self.manager.add_watch(path)
 
-    def process_IN_OPEN(self, event):
-        log.log(4, "IN_OPEN [%s]" % event)
-        self.manager.add_to_file_list(event)
+    # def process_IN_OPEN(self, event):
+    #     log.log(4, "IN_OPEN [%s]" % event)
+    #     self.manager.add_to_file_list(event)
 
-    def process_IN_CLOSE_NOWRITE(self, event):
-        log.log(4, "IN_CLOSE_NOWRITE [%s]" % event)
-        self.manager.remove_from_file_list(event)
+    # def process_IN_CLOSE_NOWRITE(self, event):
+    #     log.log(4, "IN_CLOSE_NOWRITE [%s]" % event)
+    #     self.manager.remove_from_file_list(event)
 
     def process_IN_CLOSE_WRITE(self, event):
         log.log(4, "IN_CLOSE_WRITE [%s]" % event)
-        # remove from dictionary
-        self.manager.remove_from_file_list(event)
+        # # remove from dictionary
+        # self.manager.remove_from_file_list(event)
 
         if self.checkFile(event):
             try:
