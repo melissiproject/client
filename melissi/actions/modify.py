@@ -112,7 +112,7 @@ class ModifyFile(WorkerAction):
     def _put_revision(self):
         uri = '%s/api/droplet/%s/revision/' % (self._hub.config_manager.get_server(), self._record.id)
         data = {'md5': self._record.hash,
-                'number': self._record.revision,
+                'number': self._record.revision + 1,
                 'patch': False
                 }
         d = self._hub.rest_client.post(str(uri), data=data, file_handle=self._file_handler)
@@ -123,7 +123,7 @@ class ModifyFile(WorkerAction):
     def _success_droplet_callback(self, result):
         result = json.load(result.content)
         self._record.id = result['reply']['pk']
-        self._record.revision = len(result['reply']['revisions'])
+        self._record.revision = result['reply']['revisions']
 
         return self._post_revision()
 
@@ -131,8 +131,8 @@ class ModifyFile(WorkerAction):
         result = json.load(result.content)
         # self._record.signature = util.get_signature(self.fullpath)
         self._record.signature = None
-        self._record.revision = len(result['reply']['revisions'])
-        self._record.modified = melissi.util.parse_datetime(result['reply']['revisions'][-1]['created'])
+        self._record.revision = result['reply']['revisions']
+        self._record.modified = melissi.util.parse_datetime(result['reply']['updated'])
         self._record.id = result['reply']['pk']
 
     def _failure_callback(self, error):
@@ -176,7 +176,7 @@ class CreateDir(WorkerAction):
         record.hash = None
         record.watchpath_id = self._parent.watchpath.id
         record.directory = True
-        record.revision = 1
+        record.revision = 0
         record.parent_id = self._parent.id
 
         return record
@@ -196,7 +196,7 @@ class CreateDir(WorkerAction):
         uri = '%s/api/cell/' % (self._hub.config_manager.get_server())
         data = {'name': os.path.basename(self.filename),
                 'parent': self._parent.id,
-                'number': self._record.revision
+                'number': self._record.revision + 1
                 }
 
         d = self._hub.rest_client.post(str(uri), data=data)
@@ -208,8 +208,8 @@ class CreateDir(WorkerAction):
     def _success(self, result):
         result = json.load(result.content)
         self._record.id = result['reply']['pk']
-        self._record.revision = len(result['reply']['revisions'])
-        self._record.modified = melissi.util.parse_datetime(result['reply']['created'])
+        self._record.revision = result['reply']['revisions']
+        self._record.modified = melissi.util.parse_datetime(result['reply']['updated'])
 
         # add to store
         self._dms.add(self._record)
