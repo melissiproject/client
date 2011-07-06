@@ -18,6 +18,7 @@ class Queue(object):
     """
 
     def __init__(self, hub):
+        self.priority_queue = deque()
         self.queue = deque()
         self._notifications = []
         self.waiting_list = {}
@@ -26,31 +27,37 @@ class Queue(object):
         if __debug__:
             def report():
                 log.log(5, "Queue size: %s queued, %s waiting" %\
-                        (len(self.queue), len(self.waiting_list))
+                        (len(self.queue) + len(self.priority_queue),
+                         len(self.waiting_list)
+                         )
                         )
-                log.log(5, "Open file list: %s" % ' '.join(self._hub.notify_manager.open_files_list))
+                # log.log(5, "Open file list: %s" % ' '.join(self._hub.notify_manager.open_files_list))
                 reactor.callLater(3, report)
 
             reactor.callWhenRunning(report)
 
     def get(self):
-        return self.queue.popleft()
+        try:
+            return self.priority_queue.popleft()
+        except IndexError:
+            return self.queue.popleft()
 
     def put(self, item):
         if isinstance(item, CreateDir) or \
            isinstance(item, MoveDir):
             # place in the top of the queue
-            self.queue.appendleft(item)
+            self.priority_queue.append(item)
         else:
             self.queue.append(item)
 
     def clear_all(self):
+        self.priority_queue = deque()
         self.queue = deque()
         self._notifications = []
         self.waiting_list = {}
 
     def __contains__(self, item):
-        if item in self.queue:
+        if item in self.queue or item in self.priority_queue:
             return True
         else:
             return False
