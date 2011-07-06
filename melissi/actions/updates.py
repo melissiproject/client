@@ -61,12 +61,12 @@ class GetUpdates(WorkerAction):
         raise RetryLater()
 
 class CellUpdate(WorkerAction):
-    def __init__(self, hub, pk, name, roots, revisions, owner, created, updated, deleted):
+    def __init__(self, hub, pk, name, pid, revisions, owner, created, updated, deleted):
         super(CellUpdate, self).__init__(hub)
 
         self.pk = pk
         self.name = name
-        self.roots = roots
+        self.parent = pid
         self.owner = owner
         self.deleted = deleted
         self.created = melissi.util.parse_datetime(created)
@@ -85,7 +85,7 @@ class CellUpdate(WorkerAction):
         return self._fetch_file_record(File__id=self.pk)
 
     def is_root(self):
-        if not len(self.roots):
+        if not self.parent:
             return True
         else:
             return False
@@ -93,7 +93,7 @@ class CellUpdate(WorkerAction):
     def parent_exists(self):
         # return True if parent exists
         if not self.is_root():
-            return self._fetch_file_record(File__id=self.roots[0]['pk'])
+            return self._fetch_file_record(File__id=self.parent)
 
         else:
             return False
@@ -188,7 +188,7 @@ class CellUpdate(WorkerAction):
                     return True
                 elif not self.parent_exists():
                     # if parent does not exist, add to queue
-                    raise WaitItem(self.roots[0]['pk'])
+                    raise WaitItem(self.parent)
 
             self._record = self._create_record()
 
@@ -206,12 +206,12 @@ class CellUpdate(WorkerAction):
                 return
             elif not self.parent_exists():
                 # if parent does not exist, add to queue
-                raise WaitItem(self.roots[0]['pk'])
+                raise WaitItem(self.parent)
 
             # if revision is older than our revision, do nothing
-            if len(self.revisions) < self._record.revision:
+            if self.revisions < self._record.revision:
                 raise DropItem("Local revision larger %s vs %s" %\
-                               (self._record.revision, len(self.revisions))
+                               (self._record.revision, self.revisions)
                                )
 
             # file was deleted
@@ -231,7 +231,7 @@ class CellUpdate(WorkerAction):
             # file was updated
             else:
                 # check if the file was moved or renamed
-                if self.roots[0]['pk'] != self._record.parent_id or\
+                if self.parent != self._record.parent_id or\
                        self.name != os.path.basename(self._record.filename):
 
                     parent = self.parent_exists()
@@ -240,7 +240,7 @@ class CellUpdate(WorkerAction):
 
                     self._record.filename = pathjoin(parent.filename, self.name)
                     self._record.watchpath = parent.watchpath
-                    self._record.parent_id = self.roots[0]['pk']
+                    self._record.parent_id = self.parent
 
                     oldpath = pathjoin(oldwatchpath, oldfilename)
 
@@ -264,7 +264,7 @@ class CellUpdate(WorkerAction):
         self._record.modified = self.updated
 
         # update revisions
-        self._record.revision = len(self.revisions)
+        self._record.revision = self.revisions
 
         # notify user
         self._action_taken = True
@@ -303,7 +303,7 @@ class DropletUpdate(WorkerAction):
     def _create_record(self):
         record = db.File()
         record.hash = self.content_md5
-        record.revision = len(self.revisions)
+        record.revision = self.revisions
         record.id = self.pk
         record.size = None
         record.directory = False
@@ -441,9 +441,9 @@ class DropletUpdate(WorkerAction):
             self._new = False
 
             # if revision is older than our revision, do nothing
-            if len(self.revisions) < self._record.revision:
+            if self.revisions < self._record.revision:
                 raise DropItem("Local revision larger %s vs %s" %\
-                               (self._record.revision, len(self.revisions))
+                               (self._record.revision, self.revisions)
                                )
 
             # if deleted call a delete
@@ -479,7 +479,7 @@ class DropletUpdate(WorkerAction):
             # check if file content changed
             # TODO be aware of race conditions here
             if self.content_md5 != self._record.hash and \
-               len(self.revisions) > self._record.revision:
+               self.revisions > self._record.revision:
                 # yeah there is some new content, let's fetch this
                 # return self._get_patch()
                 return self._get_file()
@@ -511,7 +511,7 @@ class DropletUpdate(WorkerAction):
         self._record.signature = self._generate_signature()
         self._record.hash = self.content_md5
         self._record.modified = self.updated
-        self._record.revision = len(self.revisions)
+        self._record.revision = self.revisions
 
         # notify user
         self._action_taken = True
@@ -551,7 +551,7 @@ class DropletUpdate(WorkerAction):
 
         # update signature, revision and time
         self._record.signature = self._generate_signature()
-        self._record.revision = len(self.revisions)
+        self._record.revision = self.revisions
         self._record.modified = self.updated
 
         # notify user
