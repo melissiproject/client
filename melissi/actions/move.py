@@ -82,7 +82,7 @@ class MoveObject(WorkerAction):
         uri = self._get_uri()
         data = self._get_data()
 
-        d = self._hub.rest_client.put(str(uri), data=data)
+        d = self._action(str(uri), data=data)
         d.addCallback(self._success)
         d.addErrback(self._failure)
         return d
@@ -97,6 +97,10 @@ class MoveFile(MoveObject):
     def __init__(self, hub, filename, old_filename, watchpath):
         super(MoveFile, self).__init__(hub, filename, old_filename, watchpath)
 
+    @property
+    def _action(self):
+        return self._hub.rest_client.post
+
     def _get_data(self):
         return {'name'  : os.path.basename(self.filename),
                 'cell'  : self._parent.id,
@@ -104,8 +108,8 @@ class MoveFile(MoveObject):
                 }
 
     def _get_uri(self):
-        return '%s/api/droplet/%s/' % (self._hub.config_manager.get_server(),
-                                       self._record.id)
+        return '%s/api/droplet/%s/revision/' % (self._hub.config_manager.get_server(),
+                                               self._record.id)
 
 
     def _success(self, result):
@@ -126,6 +130,10 @@ class MoveFile(MoveObject):
 class MoveDir(MoveObject):
     def __init__(self, hub, filename, old_filename, watchpath):
         super(MoveDir, self).__init__(hub, filename, old_filename, watchpath)
+
+    @property
+    def _action(self):
+        return self._hub.rest_client.put
 
     def _get_data(self):
         return {'name'  : os.path.basename(self.filename),
