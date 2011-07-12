@@ -99,7 +99,7 @@ class HandleEvents(pyinotify.ProcessEvent):
         log.log(4, "IN_DELETE [%s]" % event)
         # TODO when delete dir what happens with the files?
         # remove from dictionary
-        self.manager.remove_from_file_list(event)
+        # self.manager.remove_from_file_list(event)
 
         try:
             path = unicode(event.pathname)
@@ -119,10 +119,19 @@ class HandleEvents(pyinotify.ProcessEvent):
                                       pathjoin(w,f)
                                       )
 
+    def process_IN_MOVED_FROM(self, event):
+        log.log(4, "IN_MOVE_SELF [%s]" % event)
+
+        # when deleting a file using file managers like nautilus a
+        # file is actually /moved/ somewhere. In this function we take
+        # care to actually delete the file / dir on the server and
+        # from our local db.
+        self.process_IN_DELETE(event)
+
     def process_IN_MOVED_TO(self, event):
         log.log(4, "IN_MOVED_TO [%s]" % event)
         # remove from dictionary
-        self.manager.remove_from_file_list(event)
+        # self.manager.remove_from_file_list(event)
 
         try:
             path = unicode(event.pathname)
