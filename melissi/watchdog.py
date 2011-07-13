@@ -7,7 +7,8 @@ from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 
 # melissi modules
-from actions.updates import GetUpdates, RescanDirectories
+from actions.updates import GetUpdates
+from actions.fs import  RescanDirectories
 
 class WatchDog(object):
     """
