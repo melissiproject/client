@@ -1,0 +1,31 @@
+* Melissi Cloud Storage Desktop Client
+** About
+   Melissi cloud storage desktop client is a client for [[http://github.com/melissiproject/server][melissi cloud
+   storage server]]. The client will keep the special /melissi/
+   directory in your home folder in sync with the server, by
+   automatically downloading new files and updates of existing files
+   and also posting locally created files.
+
+
+** Installing
+  Melissi is /alpha/ software but you can already install melissi
+  client and use it with a melissi server (aka /hive/).
+
+  For installation on how to install the desktop client please visit
+  [[http://melissi-client.readthedocs.org][our docs at readthedocs.org]].
+
+  You need an account on a /hive/ to use the client. You can install
+  your own hive by following the [[http://melissi-server.readthedocs.org][melissi server instructions]].
+
+** Community
+  - [[http://www.melissi.org][Melissi Website]]
+  - [[http://www.twitter.com/melissiproject][@melissiproject]] twitter and [[http://identi.ca/melissiproject][identi.ca]]
+  - #melissiproject on freenode
+  - [[http://lists.melissi.org/cgi-bin/mailman/listinfo/melissi-announce][melissi-announce]] mailing list for the news
+
+** Contributing
+  - Submit code on [[http://www.github.com/melissiproject][github]]
+  - Submit bugs on [[https://github.com/melissiproject/client/issues][github client issues]]
+  - [[http://lists.melissi.org/cgi-bin/mailman/listinfo/melissi-dev][melissi-dev]] mailing list for development
+
+
