@@ -17,6 +17,9 @@
   You need an account on a /hive/ to use the client. You can install
   your own hive by following the [[http://melissi-server.readthedocs.org][melissi server instructions]].
 
+  *Quick Instructions for Debian Users*
+  Visit [[http://packages.melissi.org][our debian package repository]] to download the latest deb!
+
 ** Community
   - [[http://www.melissi.org][Melissi Website]]
   - [[http://www.twitter.com/melissiproject][@melissiproject]] twitter and [[http://identi.ca/melissiproject][identi.ca]]
