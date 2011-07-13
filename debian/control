@@ -1,0 +1,17 @@
+Source: melissi
+Section: python
+Priority: extra
+Maintainer: Tasos Katsoulas <akatsoulas@gmail.com>
+Build-Depends: cdbs, debhelper (>= 7), python (>=2.6), python-support
+XS-Python-Version: >= 2.6
+Standards-Version: 3.8.3
+Homepage: http://dev.melissi.org
+
+Package: melissi
+Architecture: all
+Depends:  ${misc:Depends}, python-twisted, python-storm, ${python:Depends}
+Description: File synchronization client
+ insert long description, indented with spaces
+ .
+ this is a test version for porting melissi client
+ into deb
