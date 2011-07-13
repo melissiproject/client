@@ -20,9 +20,9 @@ version_string='0.1.0'
 
 _data_files = [
     ('share/man/man1', ['docs/man/man1.txt']),
-    ('share/doc/melissi', ['CHANGES.txt',
-                           'LICENCE.txt',
-                           'README.txt']
+    ('share/doc/melissi', ['CHANGES',
+                           'LICENCE',
+                           'README.org']
      ),
     ('share/icons/scalable/apps', ['melissi/data/icons/scalable/apps/melissi.svg']),
     ('share/applications', ['melissi/data/share/applications/melissi.desktop']),
@@ -39,9 +39,9 @@ setup(
     license = 'LICENCE.txt',
     keywords = ['file synchronization', 'cloud storage', 'client', 'python'],
     description = 'Cloud Storage Client',
-    long_description = open('README.txt').read(),
+    # long_description = open('README.txt').read(),
 
-    #TODO classifiers for the Pypi
+    # TODO classifiers for the Pypi
     # package_dir = {'melissi':'melissi'},
     packages = ['melissi','melissi.actions'],
     package_data = {'melissi':['data/pixmaps/*.svg',
