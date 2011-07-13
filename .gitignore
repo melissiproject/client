@@ -2,3 +2,6 @@ local_settings.py
 env/
 *.pyc
 *~
+docs/_build
+docs/_static
+docs/_templates
