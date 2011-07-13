@@ -56,7 +56,7 @@ setup(
     #               ],
     data_files = _data_files,
     entry_points = {
-        'console_scripts':['melissi = melissi.melissi:main']
+        'console_scripts':['melissi = melissi.melissi_client:main']
         },
     install_requires=['Twisted', 'storm']
 )
