@@ -9,7 +9,7 @@
     <property name="resizable">False</property>
     <property name="window_position">center</property>
     <property name="default_width">500</property>
-    <property name="icon">../images/icon-ok.svg</property>
+    <property name="icon">../pixmaps/icon-ok.svg</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
       <widget class="GtkVBox" id="dialog-vbox1">

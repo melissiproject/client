@@ -4,8 +4,9 @@
   <!-- interface-naming-policy project-wide -->
   <widget class="GtkDialog" id="recent-updates">
     <property name="border_width">5</property>
-    <property name="title" translatable="yes">Recent Updates - Melisi</property>
+    <property name="title" translatable="yes">Recent Updates - Melissi</property>
     <property name="window_position">center-always</property>
+    <property name="icon">../pixmaps/icon-ok.svg</property>
     <property name="default_width">450</property>
     <property name="default_height">700</property>
     <property name="type_hint">normal</property>
