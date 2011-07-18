@@ -32,6 +32,7 @@ class ConfigManager:
             self.config.set('main', 'new-root-path',
                             '%s' % os.path.expanduser('~'))
             self.config.set('main', 'resource', '%s' % resource)
+            self.config.set('main', 'update_interval', '30')
 
             self.write_config()
 
@@ -109,7 +110,6 @@ class ConfigManager:
         else:
             return False
 
-
     def set_watchlist(self, path):
         record = self.hub.database_manager.store.find(db.WatchPath).one() or False
         path = os.path.abspath(os.path.expanduser(path))
@@ -156,3 +156,6 @@ class ConfigManager:
             return 0
         else:
             return str(record.value)
+
+    def get_update_interval(self):
+        return int(self.config.get('main', 'update_interval'))
