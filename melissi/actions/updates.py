@@ -15,7 +15,7 @@ from melissi.actions import *
 class GetUpdates(WorkerAction):
     def __init__(self, hub, full=False):
         super(GetUpdates, self).__init__(hub)
-        self.timestamp = 0 if full else self._hub.config_manager.get_timestamp()
+        self.full = full
 
     @property
     def _uri(self):
@@ -27,6 +27,8 @@ class GetUpdates(WorkerAction):
         reactor.callLater(when, self._hub.queue.put, item)
 
     def _execute(self):
+        self.timestamp = 0 if self.full else self._hub.config_manager.get_timestamp()
+
         d = self._hub.rest_client.get(self._uri)
         d.addCallback(self._success)
         d.addErrback(self._failure)
@@ -52,13 +54,13 @@ class GetUpdates(WorkerAction):
         # update timestamp
         self._hub.config_manager.set_timestamp(result['timestamp'])
 
-        # recall self
-        self._add_to_queue(GetUpdates(hub=self._hub), when=10)
+        # place a GetUpdates in queue
+        self._add_to_queue(GetUpdates(hub=self._hub),
+                           when=self._hub.config_manager.get_update_interval()
+                           )
 
     def _failure(self, result):
         log.debug("Get updates failure %s" % result)
-
-        raise RetryLater()
 
 class CellUpdate(WorkerAction):
     def __init__(self, hub, id, name, pid, revisions, owner, created, updated, deleted):
