@@ -12,17 +12,17 @@
   client and use it with a melissi server (aka /hive/).
 
   For installation on how to install the desktop client please visit
-  [[http://melissi-client.readthedocs.org][our docs at readthedocs.org]].
+  [[http://melissi-client.readthedocs.org/][our docs at readthedocs.org]].
 
   You need an account on a /hive/ to use the client. You can install
-  your own hive by following the [[http://melissi-server.readthedocs.org][melissi server instructions]].
+  your own hive by following the [[http://melissi-server.readthedocs.org/][melissi server instructions]].
 
   *Quick Instructions for Debian Users*:
 
-  Visit [[http://packages.melissi.org][our debian package repository]] to download the latest deb!
+  Visit [[http://packages.melissi.org/][our debian package repository]] to download the latest deb!
 
 ** Community
-  - [[http://www.melissi.org][Melissi Website]]
+  - [[http://www.melissi.org/][Melissi Website]]
   - [[http://www.twitter.com/melissiproject][@melissiproject]] twitter and [[http://identi.ca/melissiproject][identi.ca]]
   - #melissiproject on freenode
   - [[http://lists.melissi.org/cgi-bin/mailman/listinfo/melissi-announce][melissi-announce]] mailing list for the news
