@@ -31,7 +31,7 @@ class Queue(object):
                          len(self.waiting_list)
                          )
                         )
-                # log.log(5, "Open file list: %s" % ' '.join(self._hub.notify_manager.open_files_list))
+
                 reactor.callLater(3, report)
 
             reactor.callWhenRunning(report)
@@ -43,11 +43,22 @@ class Queue(object):
             return self.queue.popleft()
 
     def put(self, item):
+        if item in self.priority_queue or item in self.queue:
+            log.debug("Dropping item already in queue")
+            return
+
         if isinstance(item, CreateDir) or \
            isinstance(item, MoveDir):
             # place in the top of the queue
             self.priority_queue.append(item)
         else:
+            # allow only one GetUpdates into queue
+            if isinstance(item, GetUpdates):
+                for item in self.queue:
+                    if isinstance(item, GetUpdates):
+                        log.debug("Dropping duplicate GetUpdates")
+                        return
+
             self.queue.append(item)
 
     def clear_all(self):
