@@ -1,5 +1,8 @@
-melissi (0.1.0) UNRELEASED; urgency=low
+melissi (0.1.0) unstable; urgency=low
 
   * Initial release.
+  * Added debian packaging files
+  * updated dependencies
+  * renamed CHANGES.txt to CHANGES
 
- -- Giorgos Logiotatidis <seadog@sealabs.net>  Wed, 13 Jul 2011 14:03:31 +0300
+ -- Giorgos Logiotatidis <seadog@sealabs.net>  Mon, 18 Jul 2011 10:47:19 +0300
