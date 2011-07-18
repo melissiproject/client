@@ -42,6 +42,29 @@ Melissi client is currently *alpha* software. Things may not work as expected.
      backups. This software does delete and overwrite files on your
      filesystem.
 
+
+Dependencies
+------------
+
+To run Melissi client you need to have installed the following software / libraries.
+
+  .. note ::
+
+     When installing from Debian or Fedora packages the requirements
+     will be downloaded automatically.
+
+  * python > 2.6
+  * python-gobject2
+  * python-gtk2
+  * python-glade2
+  * python-notify
+  * python-pyinotify
+  * python-twisted
+  * python-storm
+  * python-webkit
+  * xdg-open
+
+
 Debian
 ------
 
@@ -65,15 +88,17 @@ Looking for a polite fedora packager ;)
 
 
 The Python Way
---------------
+-----------------------
 
-Fetch the source code from the repository
+1. Check that you have all the dependencies_ installed
+
+2. Fetch the source code from the repository
 
  ::
 
  ~$ git clone http://github.com/melissiproject/client
 
-Install
+3. Install
 
  ::
 
@@ -94,7 +119,7 @@ Terminal
 --------
 
 If you run on a headless system (e.g. a server) or you don't want
-melissi to attach to your desktop, you can still get melissi!
+melissi to attach to your desktop, you can still get Melissi!
 
  ::
 
@@ -113,7 +138,7 @@ Melissi Project depends heavily on your contribution. You can help the
 development simply by using Melissi Desktop Client and reporting bugs
 to `our issue tracking system on github
 <http://www.github.com/melissiproject/client/issues/>`_ or, even
-better, by submitting patches that fix bug or introduce new features.
+better, by submitting patches that fix bugs or introduce new features.
 
 All development is done on github under `melissi project
 <http://www.github.com/melissiproject>`_ so can easily fork and develop.
@@ -130,7 +155,7 @@ Community
 
 * `@melissiproject <http://www.twitter.com/melissiproject/>`_ twitter and `@melissiproject <http://identi.ca/melissiproject>`_
 
-* #melissiporject on freenode
+* #melissiproject on freenode
 
 * `melissi-announce <http://lists.melissi.org/cgi-bin/mailman/listinfo/melissi-announce>`_  mailing list for the news
 
