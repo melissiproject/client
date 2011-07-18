@@ -9,7 +9,7 @@ Homepage: http://dev.melissi.org
 
 Package: melissi
 Architecture: all
-Depends:  ${misc:Depends}, python-twisted, python-storm, ${python:Depends}
+Depends:  ${misc:Depends}, python-twisted, python-storm, python-gtk2, python-glade2, python-webkit, xdg-utils, python-pyinotify, python-notify, ${python:Depends}
 Description: File synchronization client
  insert long description, indented with spaces
  .
