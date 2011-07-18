@@ -484,7 +484,7 @@ class DesktopTray:
         if button == 3:
             if data:
                 data.show_all()
-                data.popup(None, None, gtk.status_icon_position_menu, 3, time)
+                data.popup(None, None, None, 3, time)
 
     def quit_cb(self, widget, data=None):
         reactor.stop()
