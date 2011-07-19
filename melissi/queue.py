@@ -51,11 +51,12 @@ class Queue(object):
            isinstance(item, MoveDir):
             # place in the top of the queue
             self.priority_queue.append(item)
+
         else:
             # allow only one GetUpdates into queue
             if isinstance(item, GetUpdates):
-                for item in self.queue:
-                    if isinstance(item, GetUpdates):
+                for i in self.queue:
+                    if isinstance(i, GetUpdates):
                         log.debug("Dropping duplicate GetUpdates")
                         return
 
