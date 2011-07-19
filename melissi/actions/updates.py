@@ -226,6 +226,7 @@ class CellUpdate(WorkerAction):
                 # remove children and self from database
                 for child in self._dms.find(db.File,
                                             db.File.filename.like(u'%s/%%' % self._record.filename),
+                                            db.File.directory == True,
                                             db.WatchPath.path == self._record.watchpath.path,
                                             db.WatchPath.id == db.File.watchpath_id
                                             ):

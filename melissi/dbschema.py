@@ -11,7 +11,7 @@ SCHEMA_FILE = '''CREATE TABLE file (id INTEGER,
                                     directory BOOL,
                                     watchpath_id INTEGER,
                                     signature BLOB,
-                                    PRIMARY KEy (id, directory)
+                                    PRIMARY KEY (id, directory)
                                     );'''
 SCHEMA_WATCHPATH = '''CREATE TABLE watchpath (id INTEGER PRIMARY KEY,
                                               path TEXT
@@ -36,8 +36,8 @@ SCHEMA_VERSION = 1
 
 class File(object):
     __storm_table__ = "file"
-    __storm_primary = "id", "directory"
-    id = Int(primary=True)
+    __storm_primary__ = "id", "directory"
+    id = Int()
     filename = Unicode()
     hash = Unicode()
     revision = Int()

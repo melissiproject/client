@@ -101,6 +101,7 @@ class DeleteDir(DeleteObject):
         # delete all children
         for entry in self._dms.find(db.File,
                                     db.File.filename.like(u'%s/%%' % self.filename),
+                                    db.File.directory == True,
                                     db.WatchPath.path == self.watchpath,
                                     db.WatchPath.id == db.File.watchpath_id
                                     ):
