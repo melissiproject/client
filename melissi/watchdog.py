@@ -38,7 +38,9 @@ class WatchDog(object):
         return self._threshold
 
     def _watch(self):
-        if not len(self._hub.queue.queue) and len(self._hub.queue.waiting_list):
+        if not (len(self._hub.queue.queue) or \
+                len(self._hub.queue.priority_queue)
+                ) and len(self._hub.queue.waiting_list):
             if self._trigger < self._threshold:
                 self._trigger += 1
                 log.log(5, "Watchdog: increasing trigger to %s" % self._trigger)
