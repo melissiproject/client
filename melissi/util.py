@@ -4,7 +4,6 @@ import hashlib
 import tempfile
 import urllib
 import subprocess
-import pynotify
 import time
 from glib import GError
 from datetime import datetime, timedelta
