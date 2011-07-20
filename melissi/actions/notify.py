@@ -33,6 +33,9 @@ class NotifyUser(WorkerAction):
         return result.content.name
 
     def _execute(self):
+        # init pynotify
+        pynotify.init("melissi")
+
         # pop notifications
         # notifications is a list of dictionaries
         # each dictionary contains
