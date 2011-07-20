@@ -95,6 +95,9 @@ class ConfigManager:
         return self.config.get('main', 'host')
 
     def set_server(self, host):
+        # strip host
+        host = host.strip('/')
+
         # error checking
         import re
         if not re.match(r'http(s)?://[^:/]+:\d+', host):
@@ -108,7 +111,7 @@ class ConfigManager:
         if record:
             return record.path
         else:
-            return False
+            raise ValueError("No watchlist found")
 
     def set_watchlist(self, path):
         record = self.hub.database_manager.store.find(db.WatchPath).one() or False
