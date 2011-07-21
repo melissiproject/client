@@ -24,7 +24,7 @@ _data_files = [
                            'LICENCE',
                            'README.org']
      ),
-    ('share/icons/scalable/apps', ['melissi/data/icons/scalable/apps/melissi.svg']),
+    ('share/pixmaps', ['melissi/data/icons/scalable/apps/melissi.svg']),
     ('share/applications', ['melissi/data/share/applications/melissi.desktop']),
     ]
 
