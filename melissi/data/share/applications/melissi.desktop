@@ -9,5 +9,5 @@ Exec=melissi
 Icon=melissi
 Terminal=false
 Type=Application
-Categories=Network;FileTransfer;GTK
+Categories=Network;FileTransfer;GTK;
 StartupNotify=true
