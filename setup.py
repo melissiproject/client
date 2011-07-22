@@ -19,7 +19,7 @@ include_dirs=[]
 version_string='0.1.0'
 
 _data_files = [
-    ('share/man/man1', ['docs/man/man1.txt']),
+    ('share/man/man1', ['docs/man/melissi.1.gz']),
     ('share/doc/melissi', ['CHANGES',
                            'LICENCE',
                            'README.org']
