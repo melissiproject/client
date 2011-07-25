@@ -19,7 +19,7 @@ include_dirs=[]
 version_string='0.1.0'
 
 _data_files = [
-    ('share/man/man1', ['docs/man/man1.txt']),
+    ('share/man/man1', ['docs/man/melissi.1.gz']),
     ('share/doc/melissi', ['CHANGES',
                            'LICENCE',
                            'README.org']
@@ -56,7 +56,9 @@ setup(
     #               ],
     data_files = _data_files,
     entry_points = {
-        'console_scripts':['melissi = melissi.melissi_client:main']
+        'console_scripts':['melissi = melissi.melissi_client:main',
+		'cmelissi = melissi.cmelissi:main']
+        
         },
     install_requires=['Twisted', 'storm']
 )

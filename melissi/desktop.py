@@ -114,6 +114,16 @@ class DesktopTray:
             menu.append(item)
             self.items['notification-menu-item'] = item
 
+	    #Startup menu entry
+	    item = gtk.CheckMenuItem("Launch on start up")
+	    if self._check_autostart_status():
+		item.set_active(True)
+	    item.connect('activate',self.autostart_toggle)
+	    menu.append(item)
+	    self.items['notification-menu-item'] = item
+
+
+
             # Full resync entry
             item = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
             item.set_label("Force full resync")
@@ -137,6 +147,14 @@ class DesktopTray:
     def show_notifications_toggle(self, widget):
         value = str(not(self._hub.config_manager.config.get('main', 'desktop-notifications') == 'True'))
         self._hub.config_manager.set_desktop_notifications(value)
+
+	
+    def autostart_toggle(self, widget):
+	if not self._check_autostart_status():
+ 	    self._activate_autostart()
+	else:
+	    self._deactivate_autostart()
+
 
     def force_full_resync(self, *args):
         """ Places a GetUpdates(full) in the Queue """
@@ -488,3 +506,20 @@ class DesktopTray:
 
     def quit_cb(self, widget, data=None):
         reactor.stop()
+
+	
+    def _check_autostart_status(self):
+	return os.path.exists(os.path.expanduser(
+                   	      "~/.config/autostart/melissi.desktop"))
+    def _activate_autostart(self):
+	try:
+	    os.mkdir(os.path.expanduser("~/.config/autostart"))
+	except OSError:
+	    pass
+
+	if not self._check_autostart_status():
+            os.symlink("/usr/share/applications/melissi.desktop",
+	    	       os.path.expanduser("~/.config/autostart/melissi.desktop"))
+
+    def _deactivate_autostart(self):
+	os.remove(os.path.expanduser("~/.config/autostart/melissi.desktop"))
