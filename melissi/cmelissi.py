@@ -15,15 +15,11 @@ def main():
     com_services = bus.get_object('org.melissi.Melissi','/org/melissi/Melissi')
 
     parser = OptionParser()
-#    parser.add_option("--socket",
-#                      help="UNIX socket where melissi client listens",
-#                      default=os.path.expanduser("~/.config/melisi/melisi.sock")
-#                      )
     (options, args) = parser.parse_args()
 
 
     if len(args) < 1:
-        usage(commands)
+        # usage(commands)
         sys.exit(0)
 
     try:
