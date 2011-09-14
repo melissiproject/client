@@ -101,14 +101,7 @@ def main():
     hub.watch_dog = watchdog.WatchDog(hub)
 
     # enable commander
-    command_receiver = commander.FooboxCommandReceiver(hub)
-    socket_path = hub.config_manager.get_socket()
-    if socket_path:
-        try:
-            reactor.listenUNIX(socket_path, command_receiver)
-        except twisted.internet.error.CannotListenError, error_message:
-            print "Cannot use this socket. Please specify another socket"
-            sys.exit(1)
+    command_receiver = commander.MelissiService(hub)
 
     try:
         reactor.run()
