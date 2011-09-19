@@ -1,5 +1,6 @@
 # standard modules
 import json
+import inspect
 import logging
 log = logging.getLogger("melissilogger")
 
@@ -97,3 +98,20 @@ class MelissiService(dbus.service.Object):
         self._hub.rest_client.disconnect()
         self._hub.rest_client.connect()
 
+
+    @dbus.service.method('org.melissi.Melissi')
+    def list_methods(self):
+        methods = []
+
+        for method in dir(self):
+            if method[0] == '_':
+                # ignore 'hidden' methods
+                continue
+
+            elif method in ['Introspect', 'remove_from_connection'] :
+                continue
+
+            if inspect.ismethod(self.__getattribute__(method)):
+                methods.append(method)
+
+        return ', '.join(methods)
